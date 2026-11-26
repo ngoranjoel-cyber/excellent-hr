@@ -44,25 +44,91 @@ async function chargerMoi() {
 }
 const TYPES = { candidat: "Diplômé(e) ou étudiant(e)", entreprise: "Entreprise", ecole: "École ou université" };
 
+/* Icônes (traits simples, 24×24) */
+const IC = {
+  maison: '<path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/>',
+  tdb: '<circle cx="12" cy="12" r="9"/><path d="M12 12l4-4"/><path d="M12 7v1M7 12h1M16 12h1"/>',
+  offres: '<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/>',
+  candidats: '<circle cx="10" cy="8" r="3.5"/><path d="M3.5 20c.7-3.6 3.3-5.5 6.5-5.5s5.8 1.9 6.5 5.5"/><path d="M18 8v6M15 11h6"/>',
+  personnel: '<circle cx="8" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M2.5 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><path d="M14 15.5c.8-.9 1.8-1.4 3-1.4 2.3 0 4 1.6 4.5 4.4"/>',
+  conges: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="M9 15l2 2 4-4"/>',
+  ecole: '<path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c2 2 10 2 12 0v-5"/>',
+  profil: '<circle cx="12" cy="8" r="4"/><path d="M4 21c.8-4 4-6.5 8-6.5s7.2 2.5 8 6.5"/>',
+  entretien: '<path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/>',
+  orga: '<rect x="4" y="3" width="16" height="18" rx="1"/><path d="M8 7h2M14 7h2M8 11h2M14 11h2M10 21v-4h4v4"/>',
+  connexion: '<path d="M14 4h5v16h-5"/><path d="M3 12h11M10 8l4 4-4 4"/>',
+  loupe: '<circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/>',
+  oeil: '<path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  points: '<circle cx="5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="19" cy="12" r="1.3"/>',
+  tel: '<path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/>',
+  sms: '<path d="M4 5h16v11H9l-5 4z"/><path d="M8 10h.01M12 10h.01M16 10h.01"/>',
+  croix: '<path d="M6 6l12 12M18 6L6 18"/>',
+  coche: '<path d="M5 12l5 5 9-10"/>',
+  bas: '<path d="M6 9l6 6 6-6"/>',
+  doc: '<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 12h6M9 16h6"/>',
+  idee: '<path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/>',
+  fusee: '<path d="M14 4c3 0 6 3 6 6-2 4-6 7-8 8l-6-6c1-2 4-6 8-8z"/><circle cx="14.5" cy="9.5" r="1.5"/><path d="M6 12l-3 1 3 3M12 18l-1 3-3-3"/>',
+  lecture: '<circle cx="12" cy="12" r="9"/><path d="M10 8.5v7l6-3.5z"/>',
+  grille: '<path d="M5 5h2v2H5zM11 5h2v2h-2zM17 5h2v2h-2zM5 11h2v2H5zM11 11h2v2h-2zM17 11h2v2h-2zM5 17h2v2H5zM11 17h2v2h-2zM17 17h2v2h-2z"/>'
+};
+const ico = (n, t = 20) => `<svg width="${t}" height="${t}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${IC[n] || ""}</svg>`;
+/* Carré de score coloré (bleu ≥ 75, orange ≥ 60, jaune en dessous, gris sans score) */
+const carre = (s) => `<div class="carre ${s == null ? "c-gris" : s >= 75 ? "c-bleu" : s >= 60 ? "c-orange" : "c-jaune"}">${s == null ? "…" : s}</div>`;
+const tuile = (v, l, icone) => `<div class="card tuile">${icone ? `<span class="ic">${ico(icone, 18)}</span>` : ""}<div class="v">${v}</div><div class="l">${l}</div></div>`;
+/* Anneau (donut) en SVG */
+function donut(val, max, texte, couleur) {
+  const r = 52, c = 2 * Math.PI * r, p = max ? Math.max(0, Math.min(1, val / max)) : 0;
+  return `<svg width="140" height="140" viewBox="0 0 140 140"><circle cx="70" cy="70" r="${r}" fill="none" stroke="#EEF0F5" stroke-width="13"/><circle cx="70" cy="70" r="${r}" fill="none" stroke="${couleur || "var(--green)"}" stroke-width="13" stroke-linecap="round" stroke-dasharray="${(c * p).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 70 70)"/><text x="70" y="79" text-anchor="middle" font-size="28" font-weight="800" fill="var(--nuit)">${texte}</text></svg>`;
+}
+/* Radar (toile d'araignée) des critères, valeurs sur 100 */
+function radar(vals, noms) {
+  const n = vals.length, cx = 180, cy = 120, R = 80, pt = (i, k) => { const a = -Math.PI / 2 + i * 2 * Math.PI / n; return [cx + Math.cos(a) * R * k, cy + Math.sin(a) * R * k]; };
+  let s = `<svg viewBox="0 0 360 245" width="100%" style="max-width:380px">`;
+  [0.25, 0.5, 0.75, 1].forEach((k) => { s += `<polygon points="${vals.map((_, i) => pt(i, k).join(",")).join(" ")}" fill="none" stroke="#DDE2EC"/>`; });
+  vals.forEach((_, i) => { const [x, y] = pt(i, 1); s += `<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="#DDE2EC"/>`; const [lx, ly] = pt(i, 1.22); s += `<text x="${lx}" y="${ly + 4}" text-anchor="middle" font-size="10.5" fill="var(--muted)">${esc(noms[i])}</text>`; });
+  s += `<polygon points="${vals.map((v, i) => pt(i, Math.max(0.04, v / 100)).join(",")).join(" ")}" fill="rgba(14,26,68,.72)" stroke="var(--nuit)" stroke-width="1.5"/>`;
+  const moy = vals.length ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length) : 0;
+  s += `<rect x="${cx - 26}" y="${cy - 15}" width="52" height="30" rx="7" fill="#fff" stroke="#DDE2EC"/><text x="${cx}" y="${cy + 6}" text-anchor="middle" font-size="16" font-weight="800" fill="var(--nuit)">${moy}</text>`;
+  return s + "</svg>";
+}
+function menuAct(el) { const m = el.closest(".menu-act"), ouvert = m.classList.contains("ouvert"); document.querySelectorAll(".menu-act.ouvert").forEach((x) => x.classList.remove("ouvert")); if (!ouvert) m.classList.add("ouvert"); }
+document.addEventListener("click", (e) => { if (!e.target.closest(".menu-act")) document.querySelectorAll(".menu-act.ouvert").forEach((x) => x.classList.remove("ouvert")); });
+
 /* ============ Navigation ============ */
 function pages() {
-  if (!ME) return [["accueil", "Accueil"], ["connexion", "Se connecter"]];
+  if (!ME) return [["accueil", "Accueil", "maison"], ["connexion", "Se connecter", "connexion"]];
   const t = ME.profil.type, l = [];
-  if (t === "candidat") l.push(["candidat", "Mon espace"], ["entretien", "Entretien IA"]);
-  if (t === "entreprise") l.push(...(ME.org ? [["offres", "Offres"], ["recruteur", "Présélection"], ["rh", "Personnel"]] : [["organisation", "Mon entreprise"]]));
-  if (t === "ecole") l.push(ME.org ? ["ecole", "Insertion & diplômes"] : ["organisation", "Mon école"]);
-  if (ME.employes.length) l.push(["employe", "Mes congés"]);
-  l.push(["profil", "Profil"]);
+  if (t === "candidat") l.push(["candidat", "Mon espace", "maison"], ["entretien", "Entretien IA", "entretien"]);
+  if (t === "entreprise") l.push(...(ME.org ? [["tableau", "Tableau de bord", "tdb"], ["offres", "Offres", "offres"], ["recruteur", "Candidatures", "candidats"], ["rh", "Personnel", "personnel"]] : [["organisation", "Mon entreprise", "orga"]]));
+  if (t === "ecole") l.push(ME.org ? ["ecole", "Insertion", "ecole"] : ["organisation", "Mon école", "orga"]);
+  if (ME.employes.length) l.push(["employe", "Mes congés", "conges"]);
+  l.push(["profil", "Profil", "profil"]);
   return l;
 }
+const CACHEES = { fiche: "rh" }; /* pages sans bouton : la page parente reste allumée */
 function pageDepart() { return pages()[0][0]; }
-let page = "accueil", rendu = 0;
+let page = "accueil", rendu = 0, recherche = "";
 function go(p) { page = p; try { history.replaceState(null, "", "#" + p); } catch (e) { } render(); window.scrollTo(0, 0); }
+function chercher(e) {
+  if (e.key !== "Enter" || !ME) return;
+  recherche = e.target.value.trim();
+  const t = ME.profil.type;
+  if (t === "candidat") { filtre.q = recherche; go("candidat"); }
+  else if (t === "entreprise" && ME.org) { filtreRecr.q = recherche; filtreRH = recherche; go(page === "rh" || page === "fiche" ? "rh" : "recruteur"); }
+  else if (t === "ecole" && ME.org) { filtreEcole = recherche; go("ecole"); }
+}
 async function render() {
   const liste = pages();
-  if (!liste.some(([k]) => k === page)) page = liste[0][0];
-  $("#nav").innerHTML = liste.map(([k, l]) => `<button class="${k === page ? "on" : ""}" onclick="${k === "connexion" ? "modeAuth='connexion';" : ""}go('${k}')">${l}</button>`).join("");
-  $("#qui").innerHTML = ME ? `<span class="avatar sm" title="${esc(ME.email || "")}">${esc(initiales(nomComplet(ME.profil)))}</span>` : "";
+  const parent = CACHEES[page];
+  if (!liste.some(([k]) => k === page) && !(parent && liste.some(([k]) => k === parent))) page = liste[0][0];
+  const actif = parent || page;
+  $("#nav").innerHTML = ME ? liste.map(([k, l, i], idx) => `${idx === liste.length - 1 ? '<span class="sep"></span>' : ""}<button class="${k === actif ? "on" : ""}" onclick="go('${k}')" title="${l}">${ico(i, 22)}<span>${l}</span></button>`).join("") : "";
+  $("#qui").innerHTML = ME
+    ? `<span class="avatar sm" title="${esc(ME.email || "")}" onclick="go('profil')">${esc(initiales(nomComplet(ME.profil)))}</span>`
+    : `<button class="btn ghost sm" onclick="go('accueil')">Accueil</button><button class="btn bleu sm" onclick="modeAuth='connexion';go('connexion')">Se connecter</button>`;
+  const ch = $("#recherche");
+  if (ch) { ch.disabled = !ME; ch.placeholder = !ME ? "Connectez-vous pour rechercher" : ME.profil.type === "candidat" ? "Rechercher une offre, une entreprise…" : ME.profil.type === "ecole" ? "Rechercher un diplômé par nom" : "Rechercher un candidat ou un collègue par nom"; }
   const n = ++rendu;
   $("#app").innerHTML = `<p class="muted">Chargement…</p>`;
   let html;
@@ -250,32 +316,39 @@ VIEWS.candidat = async () => {
   const champs = [p.prenoms, p.nom, p.telephone, p.ville, p.formation, CAND.diplomes.length ? "x" : ""];
   const compl = Math.round(champs.filter(Boolean).length / champs.length * 100);
   const aFaire = CAND.candidatures.filter((x) => x.statut === "Entretien IA à passer");
+  const presel = CAND.candidatures.filter((x) => ["Présélectionné(e)", "Retenu(e)"].includes(x.statut)).length;
   const villes = [...new Set(CAND.offres.map((o) => o.ville).filter(Boolean))];
-  return `<h1>Bonjour ${esc(p.prenoms.split(" ")[0] || "")} 👋</h1><p class="sub">Espace Diplômés &amp; étudiants</p>
-<div class="grid g2">
- <div>
-  <div class="card">
-   <div class="row"><div class="avatar">${esc(initiales(nomComplet(p)))}</div><div class="sp"><b>${esc(nomComplet(p))}</b><div class="small muted">${esc([p.formation, p.ville].filter(Boolean).join(" · ") || "Complétez votre profil")}</div></div>
-   ${verifie ? '<span class="pill p-green">✔ Diplôme vérifié</span>' : CAND.diplomes.length ? '<span class="pill p-gray">Diplôme en attente</span>' : ""}</div>
-   <div style="margin-top:14px" class="small muted">Profil complété à ${compl} %${compl < 100 ? ` · <a href="#" onclick="go('profil');return false">compléter</a>` : ""}</div>
-   <div class="bar-h" style="margin-top:6px"><i style="width:${compl}%"></i></div>
-  </div>
-  ${aFaire.map((c) => { const o = CAND.toutes.find((x) => x.id === c.offre_id) || {}; return `<div class="alert gold" style="margin-top:14px"><b>Entretien IA à passer</b><div class="small">${esc(o.titre)} — ${esc(nomOrg(o.org_id))}${o.limite ? " · avant le " + fr(o.limite) : ""}</div><button class="btn gold sm" style="margin-top:10px" onclick="ouvrirEntretien('${c.id}')">${c.consentement ? "Reprendre l'entretien" : "Commencer l'entretien"}</button></div>`; }).join("")}
-  <div class="card" style="margin-top:14px"><div class="row"><h3 class="sp" style="margin:0">Mes diplômes</h3><button class="btn sm ghost" onclick="ajouterDiplome()">+ Déclarer</button></div>
-   ${CAND.diplomes.length ? CAND.diplomes.map((d) => `<div class="row" style="padding:9px 0;border-bottom:1px solid var(--line)"><div class="sp"><b>${esc(d.intitule)}</b><div class="small muted">${esc((CAND.ecoles.find((e) => e.id === d.ecole_id) || {}).nom || "")}${d.annee ? " · " + d.annee : ""}</div></div><span class="pill ${d.statut === "valide" ? "p-green" : d.statut === "refuse" ? "p-red" : "p-gray"}">${d.statut === "valide" ? "✔ Vérifié" : d.statut === "refuse" ? "Non reconnu" : "En attente de l'école"}</span>${d.statut !== "valide" ? `<button class="btn sm ghost" onclick="retirerDiplome('${d.id}',this)" title="Retirer">✕</button>` : ""}</div>`).join("") : '<p class="small muted">Déclarez votre diplôme : votre école le vérifiera et vous obtiendrez le badge « Diplôme vérifié ».</p>'}
-  </div>
-  <div class="card" style="margin-top:14px"><h3>Mes candidatures</h3>
-   ${CAND.candidatures.length ? CAND.candidatures.map((x) => { const o = CAND.toutes.find((y) => y.id === x.offre_id) || {}; return `<div class="row" style="padding:9px 0;border-bottom:1px solid var(--line)"><div class="sp"><b>${esc(o.titre || "Offre retirée")}</b><div class="small muted">${esc(nomOrg(o.org_id))} · ${esc(o.ville || "")}</div></div><span class="pill ${STATUTS[x.statut] || "p-gray"}">${esc(x.statut)}</span></div>`; }).join("") : '<p class="small muted">Aucune candidature pour le moment.</p>'}
-  </div>
- </div>
- <div class="card"><h3>Offres pour vous</h3>
-  <div class="grid filt" style="gap:8px;margin-bottom:10px">
+  return `<div class="entete"><div><h1>Bonjour ${esc(p.prenoms.split(" ")[0] || "")} 👋</h1><p class="sub">Espace Diplômés &amp; étudiants</p></div>
+ ${verifie ? '<span class="pill p-green">✔ Diplôme vérifié</span>' : CAND.diplomes.length ? '<span class="pill p-gray">Diplôme en attente</span>' : ""}</div>
+<div class="grid g4" style="margin-bottom:16px">
+ ${tuile(compl + "<small>%</small>", "profil complété", "profil")}
+ ${tuile(CAND.candidatures.length, "candidatures", "offres")}
+ ${tuile(aFaire.length, "entretiens à passer", "entretien")}
+ ${tuile(presel, "présélections", "fusee")}
+</div>
+${aFaire.map((c) => { const o = CAND.toutes.find((x) => x.id === c.offre_id) || {}; return `<div class="alert gold" style="margin-bottom:14px"><div class="row"><div class="sp"><b>Entretien IA à passer</b><div class="small">${esc(o.titre)} — ${esc(nomOrg(o.org_id))}${o.limite ? " · avant le " + fr(o.limite) : ""}</div></div><button class="btn bleu sm" onclick="ouvrirEntretien('${c.id}')">${ico("lecture", 16)} ${c.consentement ? "Reprendre l'entretien" : "Commencer l'entretien"}</button></div></div>`; }).join("")}
+<div class="grid g-tdb">
+ <div class="card"><div class="row" style="margin-bottom:10px"><h3 class="sp" style="margin:0">Offres pour vous</h3><span class="small muted">${CAND.offres.length} offre(s)</span></div>
+  <div class="grid filt" style="gap:8px;margin-bottom:6px;grid-template-columns:2fr 1fr 1fr">
    <input type="search" placeholder="Poste, entreprise, secteur…" value="${esc(filtre.q)}" oninput="filtre.q=this.value;majOffres()">
    <select onchange="filtre.type=this.value;majOffres()"><option value="">Tous types</option>${["Emploi", "Stage", "Alternance"].map((t) => `<option ${filtre.type === t ? "selected" : ""}>${t}</option>`).join("")}</select>
    <select onchange="filtre.ville=this.value;majOffres()"><option value="">Toutes villes</option>${villes.map((v) => `<option ${filtre.ville === v ? "selected" : ""}>${esc(v)}</option>`).join("")}</select>
   </div>
   <div id="offres">${listeOffres()}</div>
-  <p class="small muted" style="margin-top:10px">Le pourcentage est une compatibilité estimée à partir de votre formation et de votre ville.</p>
+  <p class="small muted" style="margin:10px 0 0">Le carré indique une compatibilité estimée à partir de votre formation et de votre ville.</p>
+ </div>
+ <div>
+  <div class="card">
+   <div class="row"><div class="avatar xl">${esc(initiales(nomComplet(p)))}</div><div class="sp"><b style="font-size:16px">${esc(nomComplet(p))}</b><div class="small muted">${esc([p.formation, p.ville].filter(Boolean).join(" · ") || "Complétez votre profil")}</div></div></div>
+   <div class="bar-h" style="margin-top:14px"><i style="width:${compl}%"></i></div>
+   <div class="small muted" style="margin-top:6px">Profil complété à ${compl} %${compl < 100 ? ` · <a href="#" onclick="go('profil');return false">compléter</a>` : ""}</div>
+  </div>
+  <div class="card" style="margin-top:14px"><div class="row" style="margin-bottom:6px"><h3 class="sp" style="margin:0">Mes diplômes</h3><button class="btn sm ghost" onclick="ajouterDiplome()">+ Déclarer</button></div>
+   ${CAND.diplomes.length ? CAND.diplomes.map((d) => `<div class="ligne"><span class="sq ${d.statut === "valide" ? "v" : d.statut === "refuse" ? "r" : "k"}"></span><div class="sp"><b>${esc(d.intitule)}</b><div class="small muted">${esc((CAND.ecoles.find((e) => e.id === d.ecole_id) || {}).nom || "")}${d.annee ? " · " + d.annee : ""}</div></div><span class="pill ${d.statut === "valide" ? "p-green" : d.statut === "refuse" ? "p-red" : "p-gray"}">${d.statut === "valide" ? "✔ Vérifié" : d.statut === "refuse" ? "Non reconnu" : "En attente de l'école"}</span>${d.statut !== "valide" ? `<button class="ico-btn" onclick="retirerDiplome('${d.id}',this)" title="Retirer">${ico("croix", 15)}</button>` : ""}</div>`).join("") : '<p class="small muted">Déclarez votre diplôme : votre école le vérifiera et vous obtiendrez le badge « Diplôme vérifié ».</p>'}
+  </div>
+  <div class="card" style="margin-top:14px"><h3>Mes candidatures</h3>
+   ${CAND.candidatures.length ? CAND.candidatures.map((x) => { const o = CAND.toutes.find((y) => y.id === x.offre_id) || {}; return `<div class="ligne"><div class="avatar sm" style="cursor:default">${esc(initiales(nomOrg(o.org_id)))}</div><div class="sp"><b>${esc(o.titre || "Offre retirée")}</b><div class="small muted">${esc(nomOrg(o.org_id))} · ${esc(o.ville || "")}</div></div><span class="pill ${STATUTS[x.statut] || "p-gray"}">${esc(x.statut)}</span></div>`; }).join("") : '<p class="small muted">Aucune candidature pour le moment.</p>'}
+  </div>
  </div>
 </div>`;
 };
@@ -283,7 +356,7 @@ function listeOffres() {
   const deja = new Set(CAND.candidatures.map((x) => x.offre_id));
   const l = CAND.offres.filter((o) => (!filtre.type || o.type === filtre.type) && (!filtre.ville || o.ville === filtre.ville) && (!filtre.q || (o.titre + nomOrg(o.org_id) + o.secteur).toLowerCase().includes(filtre.q.toLowerCase())))
     .map((o) => ({ o, c: compat(o) })).sort((a, b) => b.c - a.c);
-  return l.length ? l.map(({ o, c }) => `<div class="row" style="padding:11px 0;border-bottom:1px solid var(--line)"><div class="sp"><b>${esc(o.titre)}</b><div class="small muted">${esc(nomOrg(o.org_id))} · ${esc(o.ville)} · ${o.type}</div>${o.description ? `<div class="small" style="margin-top:3px">${esc(o.description.slice(0, 140))}${o.description.length > 140 ? "…" : ""}</div>` : ""}</div><span class="pill ${c >= 80 ? "p-green" : c >= 65 ? "p-navy" : "p-gray"}">${c} %</span>${deja.has(o.id) ? '<span class="small muted">Déjà postulé</span>' : `<button class="btn sm" onclick="postuler('${o.id}',this)">Postuler</button>`}</div>`).join("") : '<p class="muted">Aucune offre ne correspond pour le moment.</p>';
+  return l.length ? l.map(({ o, c }) => `<div class="candidat">${carre(c)}<div class="qui"><b>${esc(o.titre)}</b><span class="small muted">${esc(nomOrg(o.org_id))} · ${esc(o.ville)} · ${o.type}${o.limite ? " · jusqu'au " + fr(o.limite) : ""}</span>${o.description ? `<div class="small" style="margin-top:3px">${esc(o.description.slice(0, 130))}${o.description.length > 130 ? "…" : ""}</div>` : ""}</div>${deja.has(o.id) ? '<span class="pill p-gray">Déjà postulé</span>' : `<button class="btn bleu sm" onclick="postuler('${o.id}',this)">Postuler</button>`}</div>`).join("") : '<div class="vide">Aucune offre ne correspond pour le moment.</div>';
 }
 function majOffres() { $("#offres").innerHTML = listeOffres(); }
 async function postuler(id, b) {
@@ -320,27 +393,34 @@ VIEWS.entretien = async () => {
   const toutes = await SB.lire("candidatures", "user_id=eq." + ME.id + "&statut=eq." + encodeURIComponent("Entretien IA à passer") + "&order=cree_le.asc");
   let c = toutes.find((x) => x.id === candEntretien) || toutes[0];
   if (!c && candEntretien) { const [fini] = await SB.lire("candidatures", "id=eq." + candEntretien); if (fini && fini.statut !== "Entretien IA à passer") c = fini; }
-  if (!c) return `<div class="phone"><div class="card" style="text-align:center"><h2>Aucun entretien à passer</h2><p class="muted">Postulez à une offre : l'entretien IA vous sera proposé aussitôt.</p><button class="btn" onclick="go('candidat')">Voir les offres</button></div></div>`;
+  if (!c) return `<h1>Entretien IA</h1><p class="sub">Vos entretiens en ligne</p><div class="card vide">${ico("entretien", 34)}<h3 style="margin-top:10px">Aucun entretien à passer</h3><p>Postulez à une offre : l'entretien IA vous sera proposé aussitôt.</p><button class="btn bleu" onclick="go('candidat')">Voir les offres</button></div>`;
   candEntretien = c.id;
   const [o] = await SB.lire("offres", "id=eq." + c.offre_id);
   const [org] = await SB.lire("organisations", "id=eq." + o.org_id);
   const Q = questions(o, org?.nom || "cette entreprise");
-  if (c.statut !== "Entretien IA à passer") return `<div class="phone"><div class="card" style="text-align:center"><div style="font-size:42px">✅</div><h2>Entretien envoyé</h2><p class="muted">Vos réponses ont été transmises à ${esc(org?.nom)}. Un recruteur examinera votre candidature : l'IA ne prend aucune décision seule.</p><button class="btn" onclick="candEntretien=null;go('candidat')">Retour à mon espace</button></div></div>`;
-  if (!c.consentement) return `<div class="phone"><div class="card">
-   <span class="pill p-gold">Entretien assisté par l'IA</span><h2 style="margin-top:10px">${esc(o.titre)}</h2><p class="muted">${esc(org?.nom)} · 5 questions · environ 15 min</p>
-   <div class="alert navy small"><b>Avant de commencer :</b><ul style="margin:6px 0 0;padding-left:18px"><li>Vous répondez par écrit à des questions posées automatiquement.</li><li>Seul le contenu de vos réponses est évalué (pas votre visage, votre voix ou votre accent).</li><li>Le score de cette version est une estimation simple, sans IA réelle ; la décision revient toujours à un recruteur.</li><li>Votre progression est enregistrée : vous pouvez reprendre plus tard.</li></ul></div>
+  const fini = c.statut !== "Entretien IA à passer";
+  const i = fini ? Q.length : c.etape;
+  /* Colonne des modules (comme une formation) */
+  const etapes = `<div class="etapes">
+   <div class="et ${c.consentement ? "fait" : "cours"}"><span class="rond">${c.consentement ? ico("coche", 14) : ico("lecture", 14)}</span><b>Introduction</b>${c.consentement ? '<span class="termine">Terminé</span>' : ""}</div>
+   ${Q.map((_, k) => `<div class="et ${k < i ? "fait" : k === i && c.consentement && !fini ? "cours" : ""}"><span class="rond">${k < i ? ico("coche", 14) : ico("lecture", 14)}</span><b>Question ${k + 1}</b>${k < i ? '<span class="termine">Terminé</span>' : ""}</div>`).join("")}
+  </div>`;
+  const tete = `<div class="entete"><div><h1>Entretien IA</h1><p class="sub">${esc(o.titre)} · ${esc(org?.nom)}</p></div><span class="pill p-navy">5 questions · ~15 min</span></div>`;
+  if (fini) return tete + `<div class="module">${etapes}<div class="card" style="text-align:center"><div style="font-size:42px">✅</div><h2>Entretien envoyé</h2><p class="muted">Vos réponses ont été transmises à ${esc(org?.nom)}. Un recruteur examinera votre candidature : l'IA ne prend aucune décision seule.</p><button class="btn bleu" onclick="candEntretien=null;go('candidat')">Retour à mon espace</button></div></div>`;
+  if (!c.consentement) return tete + `<div class="module">${etapes}<div class="card">
+   <span class="pill p-gold">Introduction</span><h2 style="margin-top:10px">Avant de commencer</h2>
+   <div class="alert navy small"><ul style="margin:0;padding-left:18px"><li>Vous répondez par écrit à des questions posées automatiquement.</li><li>Seul le contenu de vos réponses est évalué (pas votre visage, votre voix ou votre accent).</li><li>Le score de cette version est une estimation simple, sans IA réelle ; la décision revient toujours à un recruteur.</li><li>Votre progression est enregistrée : vous pouvez reprendre plus tard.</li></ul></div>
    <label style="margin-top:14px;display:flex;gap:8px;align-items:flex-start;color:var(--ink);font-weight:500"><input type="checkbox" id="ok" style="margin-top:4px"> J'ai compris et j'accepte de passer cet entretien.</label>
-   <button class="btn" style="margin-top:12px;width:100%" onclick="consentir(this)">Commencer</button>
-   <button class="btn ghost sm" style="margin-top:10px" onclick="retirerCandidature('${c.id}',this)">Retirer ma candidature</button></div></div>`;
-  const i = c.etape, q = Q[i], rep = c.reponses[i] || {};
-  return `<div class="phone"><div class="card">
-   <div class="row"><span class="small muted">Question ${i + 1} sur ${Q.length}</span><span class="sp"></span><span class="pill p-navy">${esc(o.titre)}</span></div>
+   <div class="row" style="margin-top:14px"><button class="btn ghost sm" onclick="retirerCandidature('${c.id}',this)">Retirer ma candidature</button><span class="sp"></span><button class="btn bleu" onclick="consentir(this)">Commencer</button></div></div></div>`;
+  const q = Q[i], rep = c.reponses[i] || {};
+  return tete + `<div class="module">${etapes}<div class="card">
+   <div class="row"><span class="small muted">Question ${i + 1} sur ${Q.length}</span><span class="sp"></span><span class="small muted">Progression enregistrée</span></div>
    <div class="prog">${Q.map((_, k) => `<i class="${k <= i ? "on" : ""}"></i>`).join("")}</div>
    <div class="small muted">🤖 Assistant Excellent HR</div>
    <div class="bubble">${esc(q.q)}</div>
    ${rep.r1 ? `<div class="bubble me">${esc(rep.r1)}</div><div class="small muted">🤖 Relance</div><div class="bubble">${esc(q.relance)}</div>` : ""}
    <textarea id="rep" placeholder="Écrivez votre réponse…" maxlength="3000"></textarea>
-   <div class="row" style="margin-top:10px"><span class="small muted">Progression enregistrée</span><span class="sp"></span><button class="btn" onclick="repondre(this)">${!rep.r1 ? "Envoyer" : (i < Q.length - 1 ? "Question suivante" : "Terminer l'entretien")}</button></div>
+   <div class="row" style="margin-top:12px;justify-content:flex-end"><button class="btn ghost" onclick="go('candidat')">Plus tard</button><button class="btn bleu" id="btnRep" onclick="repondre(this)">${!rep.r1 ? "Suivant" : (i < Q.length - 1 ? "Question suivante" : "Terminer l'entretien")}</button></div>
   </div></div>`;
 };
 async function consentir(b) { if (!$("#ok").checked) return toast("Merci de cocher la case d'accord."); await occupe(b, SB.rpc("entretien_consentir", { p_cand: candEntretien })); render(); }
@@ -353,16 +433,131 @@ async function retirerCandidature(id, b) { await occupe(b, SB.rpc("retirer_candi
 
 /* ---- Entreprise : offres ---- */
 let offreChoisie = null;
+/* ---- Entreprise : tableau de bord ---- */
+VIEWS.tableau = async () => {
+  const [offres, employes] = await Promise.all([SB.lire("offres", "org_id=eq." + ME.org.id + "&order=cree_le.desc"), SB.lire("employes", "org_id=eq." + ME.org.id)]);
+  const cands = offres.length ? await SB.lire("candidatures", "offre_id=" + inListe(offres.map((o) => o.id)) + "&order=cree_le.desc") : [];
+  const conges = employes.length ? await SB.lire("conges", "employe_id=" + inListe(employes.map((e) => e.id)) + "&statut=eq." + encodeURIComponent("En attente")) : [];
+  const ids = [...new Set(cands.slice(0, 6).map((c) => c.user_id))];
+  const profils = ids.length ? await SB.lire("profils", "id=" + inListe(ids)) : [];
+  const P = Object.fromEntries(profils.map((p) => [p.id, p]));
+  const notes = cands.filter((c) => c.scores).map((c) => scoreDe(c, offres.find((o) => o.id === c.offre_id).poids));
+  const moy = notes.length ? Math.round(notes.reduce((a, b) => a + b, 0) / notes.length) : 0;
+  const crit = [0, 1, 2, 3].map((i) => { const l = cands.filter((c) => c.scores).map((c) => c.scores[i]); return l.length ? Math.round(l.reduce((a, b) => a + b, 0) / l.length) : 0; });
+  const ouvertes = offres.filter((o) => o.statut === "ouverte");
+  const fins = employes.filter((e) => e.fin && joursAvant(e.fin) <= 45 && joursAvant(e.fin) >= 0).length;
+  const passes = cands.filter((c) => c.scores).length;
+  const taux = cands.length ? Math.round(passes / cands.length * 100) : 0;
+  const coul = moy >= 75 ? "var(--green)" : moy >= 60 ? "var(--orange)" : "var(--red)";
+  return `<div class="entete"><div><h1>Tableau de bord</h1><p class="sub">${esc(ME.org.nom)}</p></div><button class="btn bleu" onclick="go('offres');setTimeout(()=>formOffre(),300)">${ico("plus", 16)} Publier une offre</button></div>
+<div class="grid g-tdb" style="align-items:start">
+ <div class="grid" style="gap:16px;align-content:start">
+  <div class="grid" style="grid-template-columns:repeat(3,1fr);gap:16px">
+   ${tuile(taux + "<small>%</small>", "entretiens passés", "candidats")}
+   ${tuile(cands.length, "candidatures", "idee")}
+   ${tuile(ouvertes.length, "offres ouvertes", "fusee")}
+  </div>
+  <div class="card"><h3>Score moyen des candidats</h3>
+   <div class="donut">
+    <div class="vals">
+     <span style="background:var(--green-l);color:var(--green)">${notes.length ? Math.max(...notes) : "—"}</span>
+     <span style="background:var(--orange-l);color:#B5531A">${notes.length ? moy : "—"}</span>
+     <span style="background:var(--red-l);color:var(--red)">${notes.length ? Math.min(...notes) : "—"}</span>
+    </div>
+    ${donut(moy, 100, notes.length ? moy : "—", coul)}
+    <div class="sp barres">${ouvertes.slice(0, 4).map((o) => { const l = cands.filter((c) => c.offre_id === o.id), p = l.filter((c) => c.scores).length; return `<div class="small" style="margin-top:6px">${esc(o.titre)}</div><div class="b"><div class="bar-h ${p ? "vert" : "gold"}"><i style="width:${l.length ? Math.round(p / l.length * 100) : 0}%"></i></div><span class="small muted">${p}/${l.length}</span></div>`; }).join("") || '<p class="small muted">Aucune offre ouverte.</p>'}</div>
+   </div>
+   <p class="small muted" style="margin:8px 0 0">Meilleur, moyen et plus faible score des entretiens terminés ; barres : entretiens passés par offre.</p>
+  </div>
+  <div class="card"><h3>Dernières candidatures</h3>
+   ${cands.slice(0, 6).map((c) => { const o = offres.find((x) => x.id === c.offre_id); return `<div class="ligne" style="cursor:pointer" onclick="offreChoisie='${o.id}';go('recruteur')"><span style="color:var(--muted)">${ico("idee", 16)}</span><div class="sp"><b>${esc(nomComplet(P[c.user_id]))}</b><div class="small muted">${esc(o.titre)}</div></div>${c.scores ? `<b>${scoreDe(c, o.poids)}</b>` : ""}<span class="pill ${STATUTS[c.statut] || "p-gray"}">${esc(c.statut)}</span></div>`; }).join("") || '<div class="vide">Aucune candidature pour le moment.</div>'}
+  </div>
+ </div>
+ <div class="grid" style="gap:16px;align-content:start">
+  <div class="card"><h3>Personnel</h3>
+   <div class="ligne"><span class="sp">Salariés</span><b>${employes.length}</b></div>
+   <div class="ligne"><span class="sp">Congés à valider</span><b style="color:${conges.length ? "var(--orange)" : "inherit"}">${conges.length}</b></div>
+   <div class="ligne"><span class="sp">Contrats finissant sous 45 jours</span><b style="color:${fins ? "var(--red)" : "inherit"}">${fins}</b></div>
+   <button class="btn ghost sm" style="margin-top:10px" onclick="go('rh')">Ouvrir le personnel</button>
+  </div>
+  <div class="card"><h3>Analyse des entretiens</h3>
+   <div style="text-align:center">${radar(crit, ["Technique", "Expérience", "Communication", "Motivation"])}</div>
+   <p class="small muted" style="margin:0">Moyenne des candidats sur chaque critère (sur 100).</p>
+  </div>
+ </div>
+</div>`;
+};
+
+/* ---- Entreprise : offres ---- */
 VIEWS.offres = async () => {
   const offres = await SB.lire("offres", "org_id=eq." + ME.org.id + "&order=cree_le.desc");
   const cands = offres.length ? await SB.lire("candidatures", "offre_id=" + inListe(offres.map((o) => o.id)) + "&select=offre_id,statut") : [];
   const n = (id, f) => cands.filter((c) => c.offre_id === id && (!f || f(c))).length;
-  return `<div class="row"><div class="sp"><h1>Offres</h1><p class="sub" style="margin:0">${esc(ME.org.nom)}</p></div><button class="btn gold" onclick="formOffre()">+ Publier une offre</button></div>
-<div class="card" style="margin-top:18px;overflow-x:auto">${offres.length ? `<table><tr><th>Offre</th><th>Type</th><th>Candidatures</th><th>Entretiens passés</th><th>Statut</th><th></th></tr>
-${offres.map((o) => `<tr><td><b>${esc(o.titre)}</b><div class="small muted">${esc(o.ville)} · publiée le ${fr(o.cree_le)}</div></td><td>${o.type}</td><td>${n(o.id)}</td><td>${n(o.id, (c) => c.statut !== "Entretien IA à passer")}</td>
+  return `<div class="entete"><div><h1>Offres</h1><p class="sub">${esc(ME.org.nom)} · ${offres.length} offre(s)</p></div><button class="btn bleu" onclick="formOffre()">+ Publier une offre</button></div>
+<div class="card" style="overflow-x:auto">${offres.length ? `<table><tr><th>Offre</th><th>Type</th><th>Candidatures</th><th>Entretiens passés</th><th>Statut</th><th></th></tr>
+${offres.map((o) => `<tr><td><b>${esc(o.titre)}</b><div class="small muted">${esc(o.ville)} · publiée le ${fr(o.cree_le)}</div></td><td>${o.type}</td><td><b>${n(o.id)}</b></td><td>${n(o.id, (c) => c.statut !== "Entretien IA à passer")}</td>
 <td><span class="pill ${o.statut === "ouverte" ? "p-green" : "p-gray"}">${o.statut === "ouverte" ? "Ouverte" : "Fermée"}</span></td>
-<td><div class="row" style="justify-content:flex-end"><button class="btn sm" onclick="offreChoisie='${o.id}';go('recruteur')">Présélection</button><button class="btn sm ghost" onclick="formOffre('${o.id}')">Modifier</button></div></td></tr>`).join("")}</table>` : '<p class="muted">Aucune offre. Publiez la première : elle sera visible par tous les candidats inscrits.</p>'}</div>`;
+<td><div class="row" style="justify-content:flex-end"><button class="btn sm" onclick="offreChoisie='${o.id}';go('recruteur')">Candidatures</button><button class="btn sm ghost" onclick="formOffre('${o.id}')">Modifier</button></div></td></tr>`).join("")}</table>` : '<div class="vide">Aucune offre. Publiez la première : elle sera visible par tous les candidats inscrits.</div>'}</div>`;
 };
+
+/* ---- Entreprise : candidatures (entonnoir + filtres + liste) ---- */
+let filtreRecr = { q: "", tri: "score", verifie: false, statut: "" };
+VIEWS.recruteur = async () => {
+  const offres = await SB.lire("offres", "org_id=eq." + ME.org.id + "&order=cree_le.desc");
+  if (!offres.length) return `<h1>Candidatures</h1><p class="sub">Publiez d'abord une offre.</p><div class="card vide"><button class="btn bleu" onclick="go('offres')">Mes offres</button></div>`;
+  const o = offres.find((x) => x.id === offreChoisie) || offres[0]; offreChoisie = o.id;
+  const toutes = await SB.lire("candidatures", "offre_id=eq." + o.id);
+  const ids = toutes.map((c) => c.user_id);
+  const [profils, diplomes] = ids.length ? await Promise.all([SB.lire("profils", "id=" + inListe(ids)), SB.lire("diplomes", "user_id=" + inListe(ids) + "&statut=eq.valide")]) : [[], []];
+  const emps = await SB.lire("employes", "org_id=eq." + ME.org.id + "&select=candidature_id");
+  PRE = { o, toutes, profils: Object.fromEntries(profils.map((p) => [p.id, p])), verifies: new Set(diplomes.map((d) => d.user_id)), embauches: new Set(emps.map((e) => e.candidature_id)) };
+  const embauches = toutes.filter((c) => PRE.embauches.has(c.id)).length;
+  const etapes = [
+    [toutes.length, "Candidatures"],
+    [toutes.filter((c) => c.shortlist || ["Présélectionné(e)", "Retenu(e)"].includes(c.statut)).length, "Présélection"],
+    [toutes.filter((c) => c.scores).length, "Entretiens"],
+    [toutes.filter((c) => ["Présélectionné(e)", "Retenu(e)"].includes(c.statut)).length, "Proposition"],
+    [embauches, "Recrutement"]];
+  const f = filtreRecr, q = f.q.toLowerCase();
+  let list = toutes.map((c) => ({ c, p: PRE.profils[c.user_id], s: c.scores ? scoreDe(c, o.poids) : null }))
+    .filter(({ c, p }) => (!q || (nomComplet(p) + " " + (p?.formation || "")).toLowerCase().includes(q)) && (!f.verifie || PRE.verifies.has(c.user_id)) && (!f.statut || c.statut === f.statut));
+  list.sort((a, b) => f.tri === "nom" ? nomComplet(a.p).localeCompare(nomComplet(b.p)) : (b.s ?? -1) - (a.s ?? -1));
+  const nb = toutes.filter((c) => c.shortlist && c.statut === "Entretien IA passé").length;
+  const puces = [f.tri === "score" ? "Trier par score" : "Trier par nom", f.verifie ? "Diplôme vérifié" : "", f.statut, f.q ? "« " + f.q + " »" : ""].filter(Boolean);
+  return `<div class="entete"><div><h1>Candidatures</h1>
+ <select onchange="offreChoisie=this.value;render()" style="max-width:420px;margin-top:6px;font-weight:700;color:var(--nuit)">${offres.map((x) => `<option value="${x.id}" ${x.id === o.id ? "selected" : ""}>${esc(x.titre)}${x.statut === "fermee" ? " (fermée)" : ""}</option>`).join("")}</select></div>
+ <button class="btn ghost" onclick="ouvrirPoids()">Grille d'évaluation</button>
+ <button class="btn bleu" ${o.shortlist_validee || !nb ? "disabled" : ""} onclick="validerSL()">${o.shortlist_validee ? "Short-list validée ✔" : "Valider la short-list (" + nb + ")"}</button></div>
+<div class="entonnoir">${etapes.map(([n, l]) => `<div class="et ${n ? "on" : ""}"><div class="n">${n || "–"}</div><div class="l">${l}</div></div>`).join("")}</div>
+<div class="recr">
+ <div class="card filtres"><h3>Filtres :</h3>
+  <div class="row" style="gap:6px">${puces.map((x) => `<span class="puce">${esc(x)}</span>`).join("")}</div>
+  <label for="r-tri">Trier</label><select id="r-tri" onchange="filtreRecr.tri=this.value;render()"><option value="score" ${f.tri === "score" ? "selected" : ""}>Par score</option><option value="nom" ${f.tri === "nom" ? "selected" : ""}>Par nom</option></select>
+  <label for="r-st">Statut</label><select id="r-st" onchange="filtreRecr.statut=this.value;render()"><option value="">Tous</option>${Object.keys(STATUTS).map((s) => `<option ${f.statut === s ? "selected" : ""}>${s}</option>`).join("")}</select>
+  <label style="display:flex;gap:8px;align-items:center;color:var(--ink);font-weight:500;margin-top:14px"><input type="checkbox" ${f.verifie ? "checked" : ""} onchange="filtreRecr.verifie=this.checked;render()"> Diplôme vérifié seulement</label>
+  ${puces.length > 1 || f.q ? `<button class="btn ghost sm" style="margin-top:14px" onclick="filtreRecr={q:'',tri:'score',verifie:false,statut:''};render()">Effacer les filtres</button>` : ""}
+  <p class="small muted" style="margin:16px 0 0">Score : estimation simple (sans IA réelle). Lisez les réponses avant de décider.</p>
+ </div>
+ <div>
+  <div class="barre-recherche"><input type="search" id="r-q" placeholder="Nom, formation…" value="${esc(f.q)}" onkeydown="if(event.key==='Enter'){filtreRecr.q=this.value.trim();render()}"><button class="btn" onclick="filtreRecr.q=$('#r-q').value.trim();render()">Rechercher</button></div>
+  <div class="liste-cand">${list.length ? list.map(({ c, p, s }) => { const emb = PRE.embauches.has(c.id); return `<div class="candidat ${c.shortlist ? "sel" : ""}">
+   <input type="checkbox" title="Short-list" ${c.shortlist ? "checked" : ""} ${o.shortlist_validee || c.statut !== "Entretien IA passé" ? "disabled" : ""} onchange="basculerSL('${c.id}',this)">
+   ${carre(s)}
+   <div class="avatar">${esc(initiales(nomComplet(p)))}</div>
+   <div class="qui"><b>${esc(nomComplet(p))}</b><span class="small muted">${PRE.verifies.has(c.user_id) ? "✔ Diplôme vérifié" : "Diplôme non vérifié"}${p?.formation ? " · " + esc(p.formation) : ""}</span></div>
+   <span class="pill ${emb ? "p-green" : STATUTS[c.statut] || "p-gray"}">${emb ? "Recruté(e)" : esc(c.statut)}</span>
+   ${c.scores ? `<button class="btn sm ghost" onclick="detail('${c.id}')">${ico("oeil", 15)} Détail</button>` : ""}
+   <div class="menu-act"><button class="ico-btn" onclick="menuAct(this)" title="Actions">${ico("points", 16)}</button><div class="menu">
+    ${c.scores ? `<button onclick="detail('${c.id}')">${ico("oeil", 16)} Voir les réponses</button>` : ""}
+    ${p?.telephone ? `<a href="tel:${esc(p.telephone.replace(/\s/g, ""))}">${ico("tel", 16)} Appeler</a><a href="sms:${esc(p.telephone.replace(/\s/g, ""))}">${ico("sms", 16)} Envoyer un SMS</a>` : `<span class="small muted" style="padding:8px 10px;display:block">Pas de téléphone renseigné</span>`}
+    ${c.scores && !emb ? `<button onclick="formEmbauche('${c.id}')">${ico("coche", 16)} Retenir et passer en RH</button>` : ""}
+    ${c.statut !== "Non retenu(e)" && !emb ? `<button onclick="refuser('${c.id}',null)">${ico("croix", 16)} Ne pas retenir</button>` : ""}
+   </div></div>
+  </div>`; }).join("") : '<div class="card vide">Aucune candidature ne correspond.</div>'}</div>
+ </div>
+</div>`;
+};
+
 async function formOffre(id) {
   const o = id ? (await SB.lire("offres", "id=eq." + id))[0] : { titre: "", ville: ME.org.ville || "", type: "Emploi", secteur: ME.org.secteur || "", description: "", limite: "", statut: "ouverte" };
   modal(`<h2>${id ? "Modifier l'offre" : "Publier une offre"}</h2>
@@ -394,38 +589,6 @@ async function confirmerSupprOffre(id, b) { await occupe(b, SB.supprimer("offres
 const CRIT = ["Compétences techniques", "Expérience / mises en situation", "Communication", "Motivation / adéquation"];
 let PRE = null;
 const scoreDe = (c, p) => { if (!c.scores) return 0; const t = p.reduce((a, b) => a + b, 0) || 1; return Math.round(c.scores.reduce((a, s, i) => a + s * p[i], 0) / t); };
-VIEWS.recruteur = async () => {
-  const offres = await SB.lire("offres", "org_id=eq." + ME.org.id + "&order=cree_le.desc");
-  if (!offres.length) return `<h1>Présélection</h1><div class="card"><p class="muted">Publiez d'abord une offre.</p><button class="btn gold" onclick="go('offres')">Mes offres</button></div>`;
-  const o = offres.find((x) => x.id === offreChoisie) || offres[0]; offreChoisie = o.id;
-  const toutes = await SB.lire("candidatures", "offre_id=eq." + o.id);
-  const ids = toutes.map((c) => c.user_id);
-  const [profils, diplomes] = ids.length ? await Promise.all([SB.lire("profils", "id=" + inListe(ids)), SB.lire("diplomes", "user_id=" + inListe(ids) + "&statut=eq.valide")]) : [[], []];
-  const emps = await SB.lire("employes", "org_id=eq." + ME.org.id + "&select=candidature_id");
-  PRE = { o, toutes, profils: Object.fromEntries(profils.map((p) => [p.id, p])), verifies: new Set(diplomes.map((d) => d.user_id)), embauches: new Set(emps.map((e) => e.candidature_id)) };
-  const list = toutes.filter((c) => c.scores).sort((a, b) => scoreDe(b, o.poids) - scoreDe(a, o.poids));
-  const attente = toutes.length - list.length, nb = list.filter((c) => c.shortlist).length;
-  const jours = Math.max(0, Math.floor((Date.now() - new Date(o.cree_le)) / 864e5));
-  return `<div class="row"><div class="sp"><h1>Présélection</h1>
- <select onchange="offreChoisie=this.value;render()" style="max-width:420px">${offres.map((x) => `<option value="${x.id}" ${x.id === o.id ? "selected" : ""}>${esc(x.titre)}${x.statut === "fermee" ? " (fermée)" : ""}</option>`).join("")}</select></div>
-<button class="btn ghost" onclick="ouvrirPoids()">⚙ Grille d'évaluation</button>
-<button class="btn gold" ${o.shortlist_validee || !nb ? "disabled" : ""} onclick="validerSL()">${o.shortlist_validee ? "Short-list validée ✔" : "Valider la short-list (" + nb + ")"}</button></div>
-<div class="grid g4" style="margin:18px 0">
- <div class="card kpi"><div class="v">${list.length}</div><div class="l">entretiens IA terminés</div></div>
- <div class="card kpi"><div class="v">${attente}</div><div class="l">entretiens en attente</div></div>
- <div class="card kpi"><div class="v">${list.length ? Math.round(list.reduce((a, c) => a + scoreDe(c, o.poids), 0) / list.length) : "—"}</div><div class="l">score moyen / 100</div></div>
- <div class="card kpi"><div class="v">${jours} j</div><div class="l">depuis la publication</div></div>
-</div>
-<div class="alert navy small" style="margin-bottom:14px">Classement proposé à partir des entretiens, <b>modifiable case par case</b>. Le score de cette version est une estimation simple (sans IA réelle) : lisez les réponses avant de décider.</div>
-<div class="card" style="overflow-x:auto">${list.length ? `<table>
-<tr><th>Short-list</th><th>Candidat</th><th>Statut</th><th>Score</th><th>${CRIT.map((c, i) => c.split(" ")[0] + " " + o.poids[i] + "%").join(" · ")}</th><th></th></tr>
-${list.map((c, k) => { const p = PRE.profils[c.user_id], s = scoreDe(c, o.poids); return `<tr class="${c.shortlist ? "sel" : ""}"><td><input type="checkbox" ${c.shortlist ? "checked" : ""} ${o.shortlist_validee || c.statut !== "Entretien IA passé" ? "disabled" : ""} onchange="basculerSL('${c.id}',this)"></td>
-<td><div class="row"><div class="avatar ${k < 3 ? "" : "gold"}" style="width:34px;height:34px;font-size:13px">${esc(initiales(nomComplet(p)))}</div><div><b>${esc(nomComplet(p))}</b><div class="small muted">${PRE.verifies.has(c.user_id) ? "✔ Diplôme vérifié" : "Diplôme non vérifié"}${p?.formation ? " · " + esc(p.formation) : ""}</div></div></div></td>
-<td><span class="pill ${STATUTS[c.statut] || "p-gray"}">${esc(c.statut)}</span></td>
-<td><span class="score" style="color:${s >= 75 ? "var(--green)" : s >= 65 ? "var(--navy)" : "var(--muted)"}">${s}</span></td>
-<td class="small muted">${c.scores.join(" · ")}</td><td><button class="btn sm ghost" onclick="detail('${c.id}')">Détail</button></td></tr>`; }).join("")}
-</table>` : '<p class="muted">Aucun entretien terminé pour cette offre pour le moment.</p>'}</div>`;
-};
 async function basculerSL(id, cb) { cb.disabled = true; try { await occupe(null, SB.rpc("basculer_shortlist", { p_cand: id })); } catch (e) { } render(); }
 function validerSL() {
   const sl = PRE.toutes.filter((c) => c.shortlist && c.statut === "Entretien IA passé");
@@ -472,7 +635,8 @@ async function appliquerPoids(b) {
 }
 
 /* ---- Entreprise : gestion du personnel ---- */
-let RH = null;
+/* ---- Entreprise : personnel ---- */
+let RH = null, filtreRH = "", ficheId = null, ongletFiche = "dossier";
 VIEWS.rh = async () => {
   const employes = await SB.lire("employes", "org_id=eq." + ME.org.id + "&order=cree_le.desc");
   const conges = employes.length ? await SB.lire("conges", "employe_id=" + inListe(employes.map((e) => e.id)) + "&order=cree_le.desc") : [];
@@ -481,25 +645,72 @@ VIEWS.rh = async () => {
   const fins = employes.filter((e) => e.fin && joursAvant(e.fin) <= 45 && joursAvant(e.fin) >= 0);
   const att = conges.filter((c) => c.statut === "En attente");
   const n = (t) => employes.filter((e) => e.contrat === t).length;
-  return `<div class="row"><div class="sp"><h1>Gestion du personnel</h1><p class="sub" style="margin:0">${esc(ME.org.nom)}</p></div><button class="btn gold" onclick="formEmploye()">+ Ajouter un salarié</button></div>
-<div class="grid g4" style="margin-top:18px">
- <div class="card kpi"><div class="v">${employes.length}</div><div class="l">employés</div></div>
- <div class="card kpi"><div class="v">${n("CDI")} / ${n("CDD")} / ${n("Stage") + n("Alternance")}</div><div class="l">CDI / CDD / stages-alternances</div></div>
- <div class="card kpi"><div class="v">${att.length}</div><div class="l">congés à valider</div></div>
- <div class="card kpi"><div class="v" style="color:${fins.length ? "var(--red)" : "var(--navy)"}">${fins.length}</div><div class="l">contrats finissant sous 45 j</div></div>
+  const q = filtreRH.toLowerCase(), vus = employes.filter((e) => !q || (e.nom + " " + e.poste + " " + e.service).toLowerCase().includes(q));
+  return `<div class="entete"><div><h1>Gestion du personnel</h1><p class="sub">${esc(ME.org.nom)}</p></div><button class="btn bleu" onclick="formEmploye()">+ Ajouter un salarié</button></div>
+<div class="grid g4">
+ ${tuile(employes.length, "employés", "personnel")}
+ ${tuile(`${n("CDI")} / ${n("CDD")} / ${n("Stage") + n("Alternance")}`, "CDI / CDD / stages-alternances", "doc")}
+ ${tuile(att.length, "congés à valider", "conges")}
+ ${tuile(`<span style="color:${fins.length ? "var(--red)" : "inherit"}">${fins.length}</span>`, "contrats finissant sous 45 j", "offres")}
 </div>
 ${fins.map((e) => `<div class="alert red" style="margin-top:12px"><b>Fin de contrat :</b> ${esc(e.nom)} (${e.contrat}) le ${fr(e.fin)} — dans ${joursAvant(e.fin)} jour(s).</div>`).join("")}
-<div class="grid g2" style="margin-top:16px">
- <div class="card" style="overflow-x:auto"><h3>Effectif</h3>${employes.length ? `<table><tr><th>Nom</th><th>Poste</th><th>Contrat</th><th>Fin</th><th>Solde</th><th></th></tr>
- ${employes.map((e) => `<tr><td><b>${esc(e.nom)}</b>${e.candidature_id ? ' <span class="pill p-gold">recruté(e) ici</span>' : ""}<div class="small muted">${esc(e.service)}${e.user_id ? " · compte relié" : ""}</div></td><td>${esc(e.poste)}</td><td><span class="pill ${e.contrat === "CDI" ? "p-navy" : e.contrat === "CDD" ? "p-gray" : "p-gold"}">${e.contrat}</span></td><td class="small">${fr(e.fin)}</td><td>${e.solde} j</td>
- <td><div class="row" style="justify-content:flex-end"><button class="btn sm ghost" onclick="attestation('${e.id}')">Attestation</button><button class="btn sm ghost" onclick="formEmploye('${e.id}')">Modifier</button></div></td></tr>`).join("")}
- </table>` : '<p class="muted">Ajoutez vos salariés, ou retenez un candidat depuis la présélection.</p>'}</div>
+<div class="grid g-tdb" style="margin-top:16px">
+ <div class="card" style="overflow-x:auto"><div class="row" style="margin-bottom:8px"><h3 class="sp" style="margin:0">Effectif</h3>${filtreRH ? `<span class="puce">« ${esc(filtreRH)} » <a href="#" style="color:#fff" onclick="filtreRH='';render();return false">✕</a></span>` : ""}</div>
+ ${vus.length ? `<table><tr><th>Nom</th><th>Poste</th><th>Contrat</th><th>Fin</th><th>Solde</th></tr>
+ ${vus.map((e) => `<tr class="cliquable" onclick="ouvrirFiche('${e.id}')"><td><div class="row" style="flex-wrap:nowrap"><div class="avatar sm">${esc(initiales(e.nom))}</div><div><b>${esc(e.nom)}</b>${e.candidature_id ? ' <span class="pill p-gold">recruté(e) ici</span>' : ""}<div class="small muted">${esc(e.service)}${e.user_id ? " · compte relié" : ""}</div></div></div></td><td>${esc(e.poste)}</td><td><span class="pill ${e.contrat === "CDI" ? "p-navy" : e.contrat === "CDD" ? "p-gray" : "p-gold"}">${e.contrat}</span></td><td class="small">${fr(e.fin)}</td><td><b>${e.solde} j</b></td></tr>`).join("")}
+ </table><p class="small muted" style="margin:10px 0 0">Cliquez sur une ligne pour ouvrir le dossier du salarié.</p>` : '<div class="vide">Ajoutez vos salariés, ou retenez un candidat depuis les candidatures.</div>'}</div>
  <div class="card"><h3>Demandes de congé</h3>
- ${conges.length ? conges.map((c) => `<div class="row" style="padding:10px 0;border-bottom:1px solid var(--line)"><div class="sp"><b>${esc(nomE(c.employe_id))}</b><div class="small muted">du ${fr(c.du)} au ${fr(c.au)} · ${c.jours} j ouvrés${c.motif ? " · " + esc(c.motif) : ""}</div></div>
- ${c.statut === "En attente" ? `<button class="btn sm" onclick="deciderConge('${c.id}',true,this)">Valider</button><button class="btn sm ghost" onclick="deciderConge('${c.id}',false,this)">Refuser</button>` : `<span class="pill ${c.statut === "Validé" ? "p-green" : "p-red"}">${c.statut}</span>`}</div>`).join("") : '<p class="muted">Aucune demande.</p>'}
+ ${conges.length ? conges.map((c) => `<div class="ligne"><div class="sp"><b>${esc(nomE(c.employe_id))}</b><div class="small muted">du ${fr(c.du)} au ${fr(c.au)} · ${c.jours} j ouvrés${c.motif ? " · " + esc(c.motif) : ""}</div></div>
+ ${c.statut === "En attente" ? `<button class="btn sm bleu" onclick="deciderConge('${c.id}',true,this)">Valider</button><button class="btn sm ghost" onclick="deciderConge('${c.id}',false,this)">Refuser</button>` : `<span class="pill ${c.statut === "Validé" ? "p-green" : "p-red"}">${c.statut}</span>`}</div>`).join("") : '<div class="vide">Aucune demande.</div>'}
  </div>
 </div>`;
 };
+function ouvrirFiche(id) { ficheId = id; ongletFiche = "dossier"; go("fiche"); }
+
+/* ---- Dossier salarié : en-tête, rubriques, frise, panneaux dépliants ---- */
+VIEWS.fiche = async () => {
+  if (!ficheId) { setTimeout(() => go("rh")); return ""; }
+  const [e] = await SB.lire("employes", "id=eq." + ficheId);
+  if (!e) { setTimeout(() => go("rh")); return ""; }
+  const conges = await SB.lire("conges", "employe_id=eq." + e.id + "&order=du.asc");
+  if (!RH) RH = { employes: [e], conges };
+  else if (!RH.employes.some((x) => x.id === e.id)) RH.employes.push(e);
+  RH.employes = RH.employes.map((x) => x.id === e.id ? e : x);
+  /* Frise : un carré par événement, rangé par année */
+  const evts = [{ d: e.cree_le, c: "v", t: "Entrée dans le personnel" }];
+  conges.forEach((c) => evts.push({ d: c.du, c: c.statut === "Validé" ? "b" : c.statut === "Refusé" ? "r" : "o", t: `Congé ${c.statut.toLowerCase()} : ${fr(c.du)} → ${fr(c.au)}` }));
+  if (e.fin) evts.push({ d: e.fin, c: "n", t: "Fin de contrat" });
+  const ans = [...new Set(evts.map((x) => String(x.d).slice(0, 4)))].sort();
+  const coul = { v: "#3DB05A", b: "#5A6B9A", r: "var(--red)", o: "#F08A3A", n: "var(--nuit)" };
+  const pris = conges.filter((c) => c.statut === "Validé").reduce((a, c) => a + c.jours, 0);
+  const attente = conges.filter((c) => c.statut === "En attente").reduce((a, c) => a + c.jours, 0);
+  const panneau = (cl, titre, resume, contenu, idp) => `<details class="accordeon" id="${idp}"><summary><span class="sq ${cl}"></span><span class="t"><b>${titre}</b><span>${resume}</span></span>${ico("bas", 18)}</summary><div class="contenu">${contenu}</div></details>`;
+  const rubr = [["r", "Contrat", "p-contrat"], ["r", "Statut du dossier", "p-statut"], ["b", "Poste et service", "p-poste"], ["b", "Congés", "p-conges"], ["k", "Compte et code de liaison", "p-compte"], ["v", "Recrutement", "p-recr"], ["n", "Documents", "p-docs"]];
+  const dossier = `<div class="dossier">
+  <nav class="rubriques">${rubr.map(([c, t, id]) => `<a href="#" onclick="const d=document.getElementById('${id}');d.open=true;d.scrollIntoView({behavior:'smooth',block:'center'});return false"><span class="sq ${c}"></span>${t}</a>`).join("")}
+   <a href="#" style="margin-top:6px" onclick="document.querySelectorAll('.accordeon').forEach(d=>d.open=false);return false">Tout replier</a></nav>
+  <div>
+   <div class="card"><div class="row" style="margin-bottom:12px"><h3 class="sp" style="margin:0">Frise chronologique</h3><span class="small muted">${evts.length} événement(s)</span></div>
+    <div class="frise">${ans.map((a) => `<div class="an"><b>${a}</b><div class="cases">${evts.filter((x) => String(x.d).startsWith(a)).map((x) => `<i title="${esc(x.t)} (${fr(x.d)})" style="background:${coul[x.c]}"></i>`).join("")}</div></div>`).join("")}</div>
+    <div class="frise-bas"></div>
+    <div class="row small muted" style="margin-top:10px;gap:14px"><span><span class="sq v"></span> entrée</span><span><span class="sq b"></span> congé validé</span><span><span class="sq o"></span> en attente</span><span><span class="sq r"></span> refusé</span><span><span class="sq n"></span> fin de contrat</span></div>
+   </div>
+   ${panneau("r", "Contrat", `${e.contrat}${e.fin ? " jusqu'au " + fr(e.fin) : " — durée indéterminée"}`, `<p>Type : <b>${e.contrat}</b><br>Fin : <b>${fr(e.fin)}</b>${e.fin ? ` (dans ${joursAvant(e.fin)} jour(s))` : ""}</p><button class="btn sm ghost" onclick="formEmploye('${e.id}')">Modifier</button>`, "p-contrat")}
+   ${panneau("r", "Statut du dossier", e.fin && joursAvant(e.fin) < 0 ? "Contrat terminé" : "Actif", `<p>Dossier créé le ${fr(e.cree_le)}.</p>`, "p-statut")}
+   ${panneau("b", "Poste et service", `${esc(e.poste || "—")}${e.service ? " · " + esc(e.service) : ""}`, `<p>Poste : <b>${esc(e.poste || "—")}</b><br>Service : <b>${esc(e.service || "—")}</b></p><button class="btn sm ghost" onclick="formEmploye('${e.id}')">Modifier</button>`, "p-poste")}
+   ${panneau("b", "Congés", `Solde ${e.solde} j · ${pris} j pris${attente ? " · " + attente + " j en attente" : ""}`, conges.length ? conges.slice().reverse().map((c) => `<div class="ligne"><span class="sp small">${fr(c.du)} → ${fr(c.au)} · ${c.jours} j${c.motif ? " · " + esc(c.motif) : ""}</span>${c.statut === "En attente" ? `<button class="btn sm bleu" onclick="deciderConge('${c.id}',true,this)">Valider</button><button class="btn sm ghost" onclick="deciderConge('${c.id}',false,this)">Refuser</button>` : `<span class="pill ${c.statut === "Validé" ? "p-green" : "p-red"}">${c.statut}</span>`}</div>`).join("") : '<p class="small muted">Aucune demande.</p>', "p-conges")}
+   ${panneau("k", "Compte et code de liaison", e.user_id ? "Compte relié" : "Pas encore relié", e.user_id ? "<p>Le salarié est relié à son compte : il demande ses congés lui-même.</p>" : `<p>Code à remettre au salarié : <b class="code">${esc(e.code)}</b><br><span class="small muted">Il crée un compte (n'importe quel type), puis le saisit dans son Profil.</span></p>`, "p-compte")}
+   ${panneau("v", "Recrutement", e.candidature_id ? "Recruté(e) via Excellent HR" : "Ajouté(e) manuellement", e.candidature_id ? "<p>Ce salarié a passé l'entretien IA et a été retenu depuis les candidatures.</p>" : "<p>Fiche créée directement dans le personnel.</p>", "p-recr")}
+   ${panneau("n", "Documents", "Attestation de travail", `<button class="btn sm" onclick="attestation('${e.id}')">${ico("doc", 15)} Générer l'attestation</button>`, "p-docs")}
+  </div></div>`;
+  const conge = `<div class="card"><h3>Congés de ${esc(e.nom)}</h3>${conges.length ? conges.slice().reverse().map((c) => `<div class="ligne"><span class="sq ${c.statut === "Validé" ? "b" : c.statut === "Refusé" ? "r" : "o"}"></span><span class="sp">${fr(c.du)} → ${fr(c.au)} · <b>${c.jours} j</b>${c.motif ? ` <span class="muted">· ${esc(c.motif)}</span>` : ""}</span><span class="pill ${c.statut === "Validé" ? "p-green" : c.statut === "Refusé" ? "p-red" : "p-gold"}">${c.statut}</span></div>`).join("") : '<div class="vide">Aucune demande.</div>'}</div>`;
+  return `<a href="#" class="small" onclick="go('rh');return false">← Personnel</a>
+<div class="fiche-tete" style="margin-top:10px"><div class="avatar xl">${esc(initiales(e.nom))}</div><div class="sp"><h1>${esc(e.nom)}</h1><div class="row" style="gap:6px"><span class="chip">${e.contrat}</span>${e.poste ? `<span class="chip">${esc(e.poste)}</span>` : ""}${e.service ? `<span class="chip">${esc(e.service)}</span>` : ""}<span class="chip">Solde ${e.solde} j</span></div></div>
+ <button class="ico-btn" title="Attestation" onclick="attestation('${e.id}')">${ico("doc", 17)}</button><button class="ico-btn" title="Modifier" onclick="formEmploye('${e.id}')">${ico("points", 17)}</button></div>
+<div class="onglets-l"><button class="${ongletFiche === "dossier" ? "on" : ""}" onclick="ongletFiche='dossier';render()">Dossier salarié</button><button class="${ongletFiche === "conges" ? "on" : ""}" onclick="ongletFiche='conges';render()">Congés</button></div>
+${ongletFiche === "dossier" ? dossier : conge}`;
+};
+
 async function deciderConge(id, ok, b) { await occupe(b, SB.rpc("decider_conge", { p_id: id, p_valide: ok }), ok ? "Congé validé" : "Congé refusé"); render(); }
 function formEmploye(id) {
   const e = id ? RH.employes.find((x) => x.id === id) : { nom: "", poste: "", service: "", contrat: "CDI", fin: "", solde: 26 };
@@ -524,7 +735,7 @@ async function enregistrerEmploye(id, b) {
 }
 async function retirerEmploye(id, b) {
   if (!b.dataset.ok) { b.dataset.ok = 1; b.textContent = "Confirmer le retrait"; return; }
-  await occupe(b, SB.supprimer("employes", "id=eq." + id), "Salarié retiré du personnel"); closeModal(); render();
+  await occupe(b, SB.supprimer("employes", "id=eq." + id), "Salarié retiré du personnel"); closeModal(); go("rh");
 }
 function attestation(id) {
   const e = RH.employes.find((x) => x.id === id), d = new Date().toLocaleDateString("fr-FR");
@@ -578,6 +789,7 @@ async function envoyerConge(b) {
 }
 
 /* ---- École ---- */
+let filtreEcole = "";
 VIEWS.ecole = async () => {
   const [st, diplomes] = await Promise.all([SB.rpc("stats_ecole"), SB.lire("diplomes", "ecole_id=eq." + ME.org.id + "&order=cree_le.desc")]);
   const ids = [...new Set(diplomes.map((d) => d.user_id))];
@@ -587,18 +799,26 @@ VIEWS.ecole = async () => {
   const fil = st.filieres.map((f) => ({ ...f, t: f.total ? Math.round(f.emploi / f.total * 100) : 0 }));
   const min = fil.length ? Math.min(...fil.map((f) => f.t)) : 0;
   const taux = st.valides ? Math.round(st.en_emploi / st.valides * 100) : 0;
-  return `<h1>Suivi de l'insertion</h1><p class="sub">${esc(ME.org.nom)}</p>
-<div class="grid g4">
- <div class="card kpi"><div class="v">${st.valides}</div><div class="l">diplômés vérifiés sur la plateforme</div></div>
- <div class="card kpi"><div class="v">${taux} %</div><div class="l">en emploi via Excellent HR</div></div>
- <div class="card kpi"><div class="v">${st.entreprises}</div><div class="l">entreprises d'accueil</div></div>
- <div class="card kpi"><div class="v">${att.length}</div><div class="l">diplômes à valider</div></div>
-</div>
-<div class="grid g2" style="margin-top:16px">
- <div class="card"><h3>Insertion par filière</h3>
-  ${fil.length ? fil.map((f) => `<div class="crit" style="grid-template-columns:140px 1fr 70px"><span>${esc(f.n)}</span><div class="bar-h ${f.t === min ? "gold" : ""}"><i style="width:${f.t}%"></i></div><b style="color:${f.t === min ? "#8A6A1E" : "inherit"}">${f.t} % <span class="muted small">(${f.emploi}/${f.total})</span></b></div>`).join("") + '<p class="small muted" style="margin-top:10px">Diplômés vérifiés ayant un emploi enregistré sur Excellent HR. La filière la plus faible est signalée en doré.</p>' : '<p class="muted">Les chiffres apparaîtront quand des diplômes auront été validés.</p>'}</div>
- <div class="card"><div class="row"><h3 class="sp" style="margin:0">Validation des diplômes</h3><button class="btn sm" ${att.length ? "" : "disabled"} onclick="validerTous(this)">Tout valider</button></div>
-  ${diplomes.length ? diplomes.map((d) => `<div class="row" style="padding:10px 0;border-bottom:1px solid var(--line)"><div class="sp"><b>${esc(nomComplet(P[d.user_id]))}</b><div class="small muted">${esc(d.intitule)}${d.filiere ? " · " + esc(d.filiere) : ""}${d.annee ? " · " + d.annee : ""}</div></div>${d.statut === "valide" ? '<span class="pill p-green">✔ Validé</span>' : d.statut === "refuse" ? '<span class="pill p-red">Non reconnu</span>' : `<button class="btn sm" onclick="deciderDiplome('${d.id}',true,this)">Valider</button><button class="btn sm ghost" onclick="deciderDiplome('${d.id}',false,this)">Refuser</button>`}</div>`).join("") : '<p class="muted small">Aucun diplôme déclaré pour le moment. Invitez vos anciens élèves à s\'inscrire et à déclarer leur diplôme.</p>'}
+  const q = filtreEcole.toLowerCase(), vus = diplomes.filter((d) => !q || (nomComplet(P[d.user_id]) + " " + d.intitule + " " + d.filiere).toLowerCase().includes(q));
+  return `<div class="entete"><div><h1>Suivi de l'insertion</h1><p class="sub">${esc(ME.org.nom)}</p></div></div>
+<div class="grid g-tdb">
+ <div class="grid" style="gap:16px;align-content:start">
+  <div class="grid" style="grid-template-columns:repeat(3,1fr);gap:16px">
+   ${tuile(st.valides, "diplômés vérifiés", "ecole")}
+   ${tuile(st.entreprises, "entreprises d'accueil", "orga")}
+   ${tuile(att.length, "diplômes à valider", "doc")}
+  </div>
+  <div class="card"><h3>Insertion par filière</h3>
+   <div class="donut">
+    ${donut(taux, 100, taux + " %", taux >= 60 ? "var(--green)" : taux >= 30 ? "var(--orange)" : "var(--red)")}
+    <div class="sp barres">${fil.length ? fil.map((f) => `<div class="small" style="margin-top:6px">${esc(f.n)}</div><div class="b"><div class="bar-h ${f.t === min ? "gold" : "vert"}"><i style="width:${f.t}%"></i></div><span class="small"><b>${f.t} %</b> <span class="muted">(${f.emploi}/${f.total})</span></span></div>`).join("") : '<p class="small muted">Les chiffres apparaîtront quand des diplômes auront été validés.</p>'}</div>
+   </div>
+   <p class="small muted" style="margin:10px 0 0">Anneau : part des diplômés vérifiés ayant un emploi enregistré sur Excellent HR. La filière la plus faible est en orange.</p>
+  </div>
+ </div>
+ <div class="card"><div class="row" style="margin-bottom:6px"><h3 class="sp" style="margin:0">Validation des diplômes</h3><button class="btn sm ghost" ${att.length ? "" : "disabled"} onclick="validerTous(this)">Tout accepter</button></div>
+  ${filtreEcole ? `<span class="puce" style="margin-bottom:6px">« ${esc(filtreEcole)} » <a href="#" style="color:#fff" onclick="filtreEcole='';render();return false">✕</a></span>` : ""}
+  ${vus.length ? vus.map((d) => `<div class="ligne"><div class="avatar sm" style="cursor:default">${esc(initiales(nomComplet(P[d.user_id])))}</div><div class="sp"><b>${esc(nomComplet(P[d.user_id]))}</b><div class="small muted">${esc(d.intitule)}${d.filiere ? " · " + esc(d.filiere) : ""}${d.annee ? " · " + d.annee : ""}</div></div>${d.statut === "valide" ? '<span class="pill p-green">✔ Validé</span>' : d.statut === "refuse" ? '<span class="pill p-red">Non reconnu</span>' : `<button class="btn sm bleu" onclick="deciderDiplome('${d.id}',true,this)">Valider</button><button class="btn sm ghost" onclick="deciderDiplome('${d.id}',false,this)">Refuser</button>`}</div>`).join("") : '<div class="vide">Aucun diplôme déclaré pour le moment. Invitez vos anciens élèves à s\'inscrire et à déclarer leur diplôme.</div>'}
  </div>
 </div>`;
 };

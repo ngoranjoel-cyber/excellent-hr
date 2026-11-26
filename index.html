@@ -9,13 +9,19 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<header><div class="bar">
-  <img src="assets/logo.png" alt="Excellent HR" onclick="go(ME ? pageDepart() : 'accueil')">
-  <nav id="nav"></nav>
-  <div id="qui" onclick="if(ME)go('profil')"></div>
-</div></header>
-<main id="app"><p class="muted">Chargement…</p></main>
-<footer>Excellent HR · L'IA recommande, l'humain décide.</footer>
+<header class="top">
+  <div class="bar">
+    <img class="logo" src="assets/logo.png" alt="Excellent HR" onclick="go(ME ? pageDepart() : 'accueil')">
+    <label class="cherche"><span class="sr" style="position:absolute;left:-9999px">Rechercher</span><input type="search" id="recherche" placeholder="Rechercher" onkeydown="chercher(event)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></label>
+    <span class="grille" title="Excellent HR"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M4 4h4v4H4zM10 4h4v4h-4zM16 4h4v4h-4zM4 10h4v4H4zM10 10h4v4h-4zM16 10h4v4h-4zM4 16h4v4H4zM10 16h4v4h-4zM16 16h4v4h-4z"/></svg></span>
+    <div id="qui"></div>
+  </div>
+  <div class="trait"></div>
+</header>
+<div class="corps">
+  <nav id="nav" aria-label="Navigation"></nav>
+  <main id="app"><p class="muted">Chargement…</p></main>
+</div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <script src="config.js"></script>
 <script src="sb.js"></script>
