@@ -28,6 +28,7 @@
     d = d || {};
     var code = d.error_code || d.code || d.error || "", brut = d.msg || d.message || d.error_description || "";
     if (MESSAGES[code]) return erreur(MESSAGES[code], code, statut);
+    if (/email not confirmed/i.test(brut)) return erreur(MESSAGES.email_not_confirmed, "email_not_confirmed", statut);
     if (/invalid login credentials/i.test(brut)) return erreur(MESSAGES.invalid_credentials, code, statut);
     if (/already registered/i.test(brut)) return erreur(MESSAGES.user_already_exists, code, statut);
     if (/password should be/i.test(brut)) return erreur(MESSAGES.weak_password, code, statut);
@@ -95,12 +96,15 @@
     configure: function () { return !!(URL_ && CLE); },
     utilisateur: function () { var s = lire(); return s ? { id: s.id, email: s.email } : null; },
     inscrire: function (email, mdp, donnees) {
-      return requete("/auth/v1/signup", { methode: "POST", corps: { email: email, password: mdp, data: donnees || {} } })
+      return requete("/auth/v1/signup?redirect_to=" + encodeURIComponent(CFG.urlSite || location.href.split("#")[0]), { methode: "POST", corps: { email: email, password: mdp, data: donnees || {} } })
         .then(function (d) { var s = depuis(d); if (s) garder(s); return { session: !!s }; });
     },
     connecter: function (email, mdp) {
       return requete("/auth/v1/token?grant_type=password", { methode: "POST", corps: { email: email, password: mdp } })
         .then(function (d) { var s = depuis(d); if (!s) throw erreur("Connexion impossible.", "session"); garder(s); return s; });
+    },
+    renvoyer: function (email) {
+      return requete("/auth/v1/resend?redirect_to=" + encodeURIComponent(CFG.urlSite || location.href.split("#")[0]), { methode: "POST", corps: { type: "signup", email: email } });
     },
     oublie: function (email) {
       return requete("/auth/v1/recover", { methode: "POST", corps: { email: email, redirect_to: CFG.urlSite || location.href.split("#")[0] } });

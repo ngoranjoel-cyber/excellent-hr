@@ -194,15 +194,29 @@ VIEWS.connexion = async () => {
   ${ins ? `<label style="margin-top:12px;display:flex;gap:8px;align-items:flex-start;color:var(--ink);font-weight:500"><input type="checkbox" id="f-ok" style="margin-top:4px"> J'accepte que mes informations soient enregistrées par Excellent HR et partagées uniquement avec les entreprises à qui je postule, l'école où j'ai déclaré un diplôme et mon employeur.</label>` : ""}
   <button class="btn" style="width:100%;margin-top:14px" onclick="${ins ? "inscription(this)" : "connexion(this)"}">${ins ? "Créer mon compte" : "Se connecter"}</button>
   ${!ins ? `<p class="small" style="text-align:center;margin-top:12px"><a href="#" onclick="motDePasseOublie();return false">Mot de passe oublié ?</a></p>` : ""}
-  <p class="small muted" id="msgAuth" style="margin-top:10px"></p>
+  <div id="msgAuth" style="margin-top:12px"></div>
  </div></div>`;
 };
+function msgAuth(html, rouge) { const m = $("#msgAuth"); if (m) { m.className = rouge ? "alert red" : "alert navy"; m.style.color = "var(--ink)"; m.innerHTML = html; } }
 async function connexion(b) {
   const email = valeur("f-email"), mdp = $("#f-mdp").value;
-  if (!email || !mdp) return toast("Saisissez votre e-mail et votre mot de passe.");
-  await occupe(b, SB.connecter(email, mdp));
+  if (!email || !mdp) return msgAuth("Saisissez votre e-mail et votre mot de passe.", true);
+  msgAuth("Connexion en cours…");
+  try { await occupe(b, SB.connecter(email, mdp)); }
+  catch (e) {
+    if (e.code === "email_not_confirmed") msgAuth(`<b>Adresse e-mail pas encore confirmée.</b><br>Ouvrez le lien reçu par e-mail (pensez aux spams), ou <a href="#" onclick="renvoyerLien(this);return false">renvoyer le lien de confirmation</a>.`, true);
+    else msgAuth("<b>" + esc(e.message || "Connexion impossible.") + "</b>" + (e.code === "invalid_credentials" || /incorrect/.test(e.message || "") ? '<br>Vérifiez l\'adresse et le mot de passe, ou cliquez sur « Mot de passe oublié ? ».' : ""), true);
+    return;
+  }
   await chargerMoi(); toast("Bienvenue " + (ME?.profil.prenoms || "")); go(pageDepart());
 }
+async function renvoyerLien(a) {
+  const email = valeur("f-email"); if (!email) return msgAuth("Saisissez votre e-mail d'abord.", true);
+  a.textContent = "Envoi…";
+  try { await SB.renvoyer(email); msgAuth("Nouveau lien envoyé à <b>" + esc(email) + "</b>. Ouvrez-le, puis revenez vous connecter."); }
+  catch (e) { msgAuth(esc(e.message || "Envoi impossible."), true); }
+}
+document.addEventListener("keydown", (e) => { if (e.key === "Enter" && e.target.matches && e.target.matches("#f-email,#f-mdp") && !$("#f-ok")) { const b = [...document.querySelectorAll("#app button")].find((x) => (x.getAttribute("onclick") || "").startsWith("connexion")); if (b) { e.preventDefault(); b.click(); } } });
 async function inscription(b) {
   const d = { type: typeChoisi, prenoms: valeur("f-prenoms"), nom: valeur("f-nom"), telephone: valeur("f-tel") };
   const email = valeur("f-email"), mdp = $("#f-mdp").value;
@@ -211,7 +225,7 @@ async function inscription(b) {
   if (mdp.length < 8) return toast("Mot de passe trop court : au moins 8 caractères.");
   if (!$("#f-ok").checked) return toast("Merci de cocher la case d'accord.");
   const r = await occupe(b, SB.inscrire(email, mdp, d));
-  if (!r.session) { $("#msgAuth").innerHTML = "<b>Compte créé.</b> Ouvrez le lien reçu par e-mail pour confirmer votre adresse, puis connectez-vous."; modeAuth = "connexion"; return; }
+  if (!r.session) { msgAuth("<b>Compte créé.</b> Ouvrez le lien reçu par e-mail pour confirmer votre adresse (pensez aux spams), puis connectez-vous."); modeAuth = "connexion"; return; }
   modeAuth = "connexion"; await chargerMoi(); toast("Compte créé. Bienvenue !"); go(pageDepart());
 }
 function motDePasseOublie() {
