@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Excellent HR</title>
+<meta name="description" content="Excellent HR — recrutement et gestion RH : diplômés, écoles et entreprises.">
+<link rel="icon" href="assets/star.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header><div class="bar">
+  <img src="assets/logo.png" alt="Excellent HR" onclick="go(ME ? pageDepart() : 'accueil')">
+  <nav id="nav"></nav>
+  <div id="qui" onclick="if(ME)go('profil')"></div>
+</div></header>
+<main id="app"><p class="muted">Chargement…</p></main>
+<footer>Excellent HR · L'IA recommande, l'humain décide.</footer>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script src="config.js"></script>
+<script src="sb.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
