@@ -1,23 +1,23 @@
-/* Excellent HR — « Dossier RH papier » : chemises cartonnées, intercalaires, feuilles, tampons.
+/* Excellent HR — « Dossier RH papier », palette Bambou (verts) : chemises cartonnées, intercalaires, feuilles, tampons.
    Chargé après style.css : il en reprend la mise en page et change l'habillage. */
 :root{
-  --bureau:#E7E1D3;        /* plateau du bureau */
+  --bureau:#EEF1E4;        /* plateau du bureau */
   --papier:#FFFDF6;        /* feuille */
-  --papier-2:#F8F3E6;      /* feuille un peu jaunie */
-  --kraft:#D8B877;         /* chemise cartonnée */
-  --kraft-f:#B8954F;
-  --encre:#1D2A44;         /* encre bleu-noir */
-  --encre-2:#3A4766;
-  --trait:#D6CDB8;         /* filets d'impression */
-  --tampon-vert:#2F6B3B; --tampon-rouge:#B23A2E; --tampon-bleu:#27498C; --tampon-ocre:#A26A12;
+  --papier-2:#F4F6EC;      /* feuille un peu jaunie */
+  --kraft:#B9D98F;         /* chemise cartonnée */
+  --kraft-f:#8DB860;
+  --encre:#22401B;         /* encre bleu-noir */
+  --encre-2:#3E5A33;
+  --trait:#D3DCC3;         /* filets d'impression */
+  --tampon-vert:#3F7A1E; --tampon-rouge:#B23A2E; --tampon-bleu:#27498C; --tampon-ocre:#A26A12;
   --machine:"Courier New","Courier Prime","Courier 10 Pitch",Courier,monospace;
   --titre:Georgia,"Times New Roman","DejaVu Serif",serif;
-  --nuit:var(--encre); --ink:var(--encre); --muted:#6E6858; --line:var(--trait);
+  --nuit:var(--encre); --ink:var(--encre); --muted:#5F6B55; --line:var(--trait);
   --bg:var(--bureau); --card:var(--papier); --bleu:var(--tampon-bleu); --bleu-f:#1C3770; --bleu-l:#E6ECF6;
   --r:3px;
 }
 body{background:var(--bureau);color:var(--encre);
-  background-image:radial-gradient(rgba(90,70,30,.05) 1px,transparent 1px);background-size:5px 5px}
+  background-image:radial-gradient(rgba(50,80,30,.05) 1px,transparent 1px);background-size:5px 5px}
 a{color:var(--tampon-bleu)}
 h1,h2{font-family:var(--titre);font-weight:400;color:var(--encre);letter-spacing:0}
 h1{font-size:30px}
@@ -30,26 +30,26 @@ h3{font-family:var(--machine);font-size:12.5px;text-transform:uppercase;letter-s
   background-image:repeating-linear-gradient(0deg,rgba(255,255,255,.025) 0 2px,transparent 2px 6px)}
 .cote .logo{background:var(--papier);padding:6px 10px;border-radius:2px;height:58px;margin:0 14px 26px 0;box-shadow:2px 2px 0 rgba(0,0,0,.25)}
 #nav{gap:6px;overflow:visible}
-#nav button{border-radius:4px 0 0 4px;padding:11px 14px;color:#C8CFDD;font-family:var(--machine);font-size:13px;letter-spacing:.04em;text-transform:uppercase;font-weight:700;
+#nav button{border-radius:4px 0 0 4px;padding:11px 14px;color:#CFE0C2;font-family:var(--machine);font-size:13px;letter-spacing:.04em;text-transform:uppercase;font-weight:700;
   background:rgba(255,255,255,.05);border-left:4px solid transparent}
-#nav button:nth-child(4n+1){border-left-color:#D8B877}
-#nav button:nth-child(4n+2){border-left-color:#C9705A}
-#nav button:nth-child(4n+3){border-left-color:#7FA37A}
-#nav button:nth-child(4n+4){border-left-color:#8EA6CF}
+#nav button:nth-child(4n+1){border-left-color:#B9D98F}
+#nav button:nth-child(4n+2){border-left-color:#5B9E2E}
+#nav button:nth-child(4n+3){border-left-color:#8CC63F}
+#nav button:nth-child(4n+4){border-left-color:#E0A23B}
 #nav button svg{color:inherit;opacity:.8}
 #nav button:hover{background:rgba(255,255,255,.12);color:#fff}
 #nav button.on{background:var(--bureau);color:var(--encre);box-shadow:none;margin-right:0;position:relative}
 #nav button.on svg{color:var(--encre)}
 #nav button.on::after{content:"";position:absolute;right:-1px;top:0;bottom:0;width:2px;background:var(--bureau)}
-.cote-pied{color:#9AA3B8;font-family:var(--machine);font-size:11px;margin:14px 14px 0 0;padding:8px 10px;border:1px dashed rgba(255,255,255,.25)}
-header.top{background:rgba(231,225,211,.94);border-bottom:1px solid var(--trait)}
+.cote-pied{color:#A9BF9B;font-family:var(--machine);font-size:11px;margin:14px 14px 0 0;padding:8px 10px;border:1px dashed rgba(255,255,255,.25)}
+header.top{background:rgba(238,241,228,.94);border-bottom:1px solid var(--trait)}
 .cherche input,.cherche input[type=search]{border-radius:2px;background:var(--papier);border:1px solid var(--trait);box-shadow:inset 0 1px 0 rgba(0,0,0,.03);font-family:var(--machine)}
 @media(max-width:900px){
   .cote{padding:0 4px calc(4px + env(safe-area-inset-bottom));background:var(--encre);border-top:0;box-shadow:0 -2px 0 var(--kraft-f)}
   #nav{gap:3px}
   #nav button{border-left:0;border-top:3px solid transparent;border-radius:0 0 5px 5px;font-size:9.5px;letter-spacing:.02em;padding:7px 3px}
-  #nav button:nth-child(4n+1){border-top-color:#D8B877}#nav button:nth-child(4n+2){border-top-color:#C9705A}
-  #nav button:nth-child(4n+3){border-top-color:#7FA37A}#nav button:nth-child(4n+4){border-top-color:#8EA6CF}
+  #nav button:nth-child(4n+1){border-top-color:#B9D98F}#nav button:nth-child(4n+2){border-top-color:#5B9E2E}
+  #nav button:nth-child(4n+3){border-top-color:#8CC63F}#nav button:nth-child(4n+4){border-top-color:#E0A23B}
   #nav button.on{background:var(--bureau);border-top-color:var(--bureau)}
   #nav button.on::after{display:none}
   header.top{background:var(--papier);border-bottom:2px solid var(--encre)}
@@ -66,27 +66,27 @@ header.top{background:rgba(231,225,211,.94);border-bottom:1px solid var(--trait)
 
 /* ---------- Fiches bristol (tuiles chiffrées) ---------- */
 .tuile{padding:16px 18px 14px;background:var(--papier);
-  background-image:linear-gradient(var(--papier),var(--papier)),repeating-linear-gradient(180deg,transparent 0 23px,#E6DFCB 23px 24px);
-  border-top:3px solid #C9705A}
+  background-image:linear-gradient(var(--papier),var(--papier)),repeating-linear-gradient(180deg,transparent 0 23px,#E3EAD4 23px 24px);
+  border-top:3px solid #5B9E2E}
 .tuile .v{font-family:var(--machine);font-weight:700;font-size:36px;color:var(--encre)}
 .tuile .l{font-family:var(--machine);text-transform:uppercase;letter-spacing:.1em;font-size:11px;color:var(--muted)}
 .tuile .ic{color:var(--kraft-f)}
 .grid>.tuile:nth-child(4n+2){border-top-color:var(--kraft-f)}
-.grid>.tuile:nth-child(4n+3){border-top-color:#5E8A58}
+.grid>.tuile:nth-child(4n+3){border-top-color:#8CC63F}
 .grid>.tuile:nth-child(4n+4){border-top-color:var(--tampon-bleu)}
 .kpi .v,.entonnoir .n,.score{font-family:var(--machine);font-weight:700}
 
 /* ---------- Chemise : en-tête des espaces ---------- */
 .chemise{margin:10px 0 26px;position:relative}
-.chemise-onglet{display:inline-block;background:var(--kraft);color:#3B2E12;font-family:var(--machine);font-weight:700;
+.chemise-onglet{display:inline-block;background:var(--kraft);color:#24461C;font-family:var(--machine);font-weight:700;
   font-size:12px;letter-spacing:.12em;text-transform:uppercase;padding:8px 22px 6px;border-radius:6px 6px 0 0;margin-left:18px;
   border:1px solid var(--kraft-f);border-bottom:0}
 .chemise-corps{display:flex;align-items:center;gap:22px;flex-wrap:wrap;background:var(--kraft);border:1px solid var(--kraft-f);
-  border-radius:0 4px 4px 4px;padding:22px 26px;box-shadow:0 2px 0 var(--kraft-f),0 5px 0 #CDAE6E,0 6px 0 var(--kraft-f);
-  background-image:linear-gradient(90deg,rgba(255,255,255,.12),rgba(255,255,255,0) 40%),repeating-linear-gradient(90deg,rgba(120,90,30,.04) 0 1px,transparent 1px 4px)}
-.chemise h1{font-size:34px;margin:0;color:#2A220F}
-.chemise .ref{margin:0 0 4px;font-family:var(--machine);font-size:12.5px;color:#5C4A20}
-.photo-id{width:78px;height:92px;flex:none;background:var(--papier);border:1px solid #9C8650;display:grid;place-items:center;
+  border-radius:0 4px 4px 4px;padding:22px 26px;box-shadow:0 2px 0 var(--kraft-f),0 5px 0 #A5CB78,0 6px 0 var(--kraft-f);
+  background-image:linear-gradient(90deg,rgba(255,255,255,.12),rgba(255,255,255,0) 40%),repeating-linear-gradient(90deg,rgba(60,100,30,.05) 0 1px,transparent 1px 4px)}
+.chemise h1{font-size:34px;margin:0;color:#1C3513}
+.chemise .ref{margin:0 0 4px;font-family:var(--machine);font-size:12.5px;color:#2E5220}
+.photo-id{width:78px;height:92px;flex:none;background:var(--papier);border:1px solid #7DA352;display:grid;place-items:center;
   font-family:var(--titre);font-size:28px;color:var(--encre);box-shadow:2px 2px 0 rgba(0,0,0,.12);transform:rotate(-2deg);position:relative}
 .photo-id::before{content:"";position:absolute;top:-7px;left:50%;width:30px;height:12px;margin-left:-15px;background:rgba(200,200,200,.7);
   border:1px solid rgba(0,0,0,.08);transform:rotate(3deg)}
@@ -101,29 +101,29 @@ header.top{background:rgba(231,225,211,.94);border-bottom:1px solid var(--trait)
 }
 
 /* ---------- Dossier salarié ---------- */
-.bandeau-profil{background:var(--kraft);color:#2A220F;border-radius:0 4px 0 0;border:1px solid var(--kraft-f);border-bottom:0;padding:16px 26px 0;margin:10px 0 0;
-  background-image:repeating-linear-gradient(90deg,rgba(120,90,30,.04) 0 1px,transparent 1px 4px)}
-.bandeau-profil .retour{color:#5C4A20;font-family:var(--machine);font-size:12.5px}
-.bandeau-profil h1{color:#2A220F;font-size:34px;font-weight:400}
-.bandeau-profil .poste{color:#5C4A20;font-family:var(--machine)}
+.bandeau-profil{background:var(--kraft);color:#1C3513;border-radius:0 4px 0 0;border:1px solid var(--kraft-f);border-bottom:0;padding:16px 26px 0;margin:10px 0 0;
+  background-image:repeating-linear-gradient(90deg,rgba(60,100,30,.05) 0 1px,transparent 1px 4px)}
+.bandeau-profil .retour{color:#2E5220;font-family:var(--machine);font-size:12.5px}
+.bandeau-profil h1{color:#1C3513;font-size:34px;font-weight:400}
+.bandeau-profil .poste{color:#2E5220;font-family:var(--machine)}
 .avatar.xxl{width:86px;height:100px;border-radius:0;background:var(--papier);color:var(--encre);font-family:var(--titre);font-weight:400;
-  border:1px solid #9C8650;box-shadow:2px 2px 0 rgba(0,0,0,.12);transform:rotate(-2deg);margin-bottom:-10px}
+  border:1px solid #7DA352;box-shadow:2px 2px 0 rgba(0,0,0,.12);transform:rotate(-2deg);margin-bottom:-10px}
 .btn.ghost-blanc{background:var(--papier);color:var(--encre);border:1px solid var(--encre)}
 .btn.ghost-blanc:hover{background:#fff}
 .bandeau-profil .onglets-l{margin:16px 0 0 110px;gap:4px}
-.bandeau-profil .onglets-l button{background:#E4CB93;color:#5C4A20;border:1px solid var(--kraft-f);border-bottom:0;border-radius:6px 6px 0 0;
+.bandeau-profil .onglets-l button{background:#CFE5B0;color:#2E5220;border:1px solid var(--kraft-f);border-bottom:0;border-radius:6px 6px 0 0;
   font-family:var(--machine);text-transform:uppercase;letter-spacing:.08em;font-size:12px;padding:9px 18px}
 .bandeau-profil .onglets-l button.on{background:var(--papier);color:var(--encre);position:relative;top:1px}
 .profil-corps{background:var(--papier);border:1px solid var(--trait);padding:22px;margin-bottom:20px;box-shadow:3px 3px 0 var(--trait)}
 .profil-corps .card{box-shadow:none}
 .vitals .v{flex-direction:row;align-items:baseline;gap:6px;border-bottom:0;padding:7px 0;font-family:var(--machine);font-size:13px}
 .vitals .v span{order:1;color:var(--muted);font-size:13px;white-space:nowrap}
-.vitals .v::before{content:"";order:2;flex:1;min-width:12px;border-bottom:2px dotted #B8AE95;transform:translateY(-4px)}
+.vitals .v::before{content:"";order:2;flex:1;min-width:12px;border-bottom:2px dotted #A9B897;transform:translateY(-4px)}
 .vitals .v b{order:3;font-weight:700;font-size:13px;text-align:right}
 @media(max-width:900px){.bandeau-profil{padding:12px 14px 0}.bandeau-profil h1{font-size:24px}.avatar.xxl{width:58px;height:68px;font-size:20px;margin-bottom:0}.bandeau-profil .onglets-l{margin:10px 0 0}.profil-corps{padding:12px}}
 .onglets-l{border-bottom:1px solid var(--encre)}
 .onglets-l button{color:var(--encre-2);font-family:var(--machine);text-transform:uppercase;font-size:12.5px;letter-spacing:.06em}
-.onglets-l button.on{color:var(--encre);box-shadow:inset 0 -3px 0 #C9705A}
+.onglets-l button.on{color:var(--encre);box-shadow:inset 0 -3px 0 #5B9E2E}
 .rubriques{border-left:2px solid var(--encre)}
 .rubriques a{color:var(--encre-2);font-family:var(--machine);font-size:12.5px}
 
@@ -138,10 +138,10 @@ header.top{background:rgba(231,225,211,.94);border-bottom:1px solid var(--trait)
 .termine{background:none;color:var(--tampon-vert);border:2px solid currentColor;border-radius:2px;font-family:var(--machine);text-transform:uppercase;transform:rotate(-3deg)}
 
 /* ---------- Boutons : tampons encreurs ---------- */
-.btn{border-radius:3px;background:var(--encre);box-shadow:2px 2px 0 #8C826A;font-weight:700;transition:transform .08s,box-shadow .08s}
-.btn:hover{background:#2A3A5C}
+.btn{border-radius:3px;background:var(--encre);box-shadow:2px 2px 0 #7F8F6A;font-weight:700;transition:transform .08s,box-shadow .08s}
+.btn:hover{background:#2F5424}
 .btn:active{transform:translate(2px,2px);box-shadow:none}
-.btn.bleu,.btn.gold{background:#C9705A;color:#fff}.btn.bleu:hover,.btn.gold:hover{background:#B35E49}
+.btn.bleu,.btn.gold{background:#5B9E2E;color:#fff}.btn.bleu:hover,.btn.gold:hover{background:#4C8A24}
 .btn.ghost{background:var(--papier);color:var(--encre);border:1.5px solid var(--encre)}
 .btn.ghost:hover{background:#fff}
 .btn.red{background:var(--tampon-rouge)}
@@ -151,7 +151,7 @@ header.top{background:rgba(231,225,211,.94);border-bottom:1px solid var(--trait)
 /* ---------- Registres (tableaux) ---------- */
 th{font-family:var(--machine);color:var(--encre);border-bottom:2px solid var(--encre);letter-spacing:.08em}
 td{border-bottom:1px dashed var(--trait)}
-tr.cliquable:hover td{background:#FBF5E3}
+tr.cliquable:hover td{background:#F0F6E4}
 .ligne{border-bottom:1px dashed var(--trait)}
 
 /* ---------- Avatars, scores ---------- */
@@ -160,16 +160,16 @@ tr.cliquable:hover td{background:#FBF5E3}
 .carre{border-radius:50%;background:none!important;border:2.5px solid currentColor;font-family:var(--machine);transform:rotate(-6deg)}
 .c-bleu{color:var(--tampon-vert)}.c-orange{color:var(--tampon-ocre)}.c-jaune{color:var(--tampon-rouge)}.c-gris{color:#9A9384}
 .entonnoir .et::before{background:var(--trait);height:2px}
-.entonnoir .et.on::before{background:#C9705A}
+.entonnoir .et.on::before{background:#5B9E2E}
 .entonnoir .et::after{border-radius:0;background:var(--trait);box-shadow:none;border:0;transform:rotate(45deg)}
-.entonnoir .et.on::after{background:#C9705A;box-shadow:none}
-.entonnoir .et.on .n{color:#C9705A}
+.entonnoir .et.on::after{background:#5B9E2E;box-shadow:none}
+.entonnoir .et.on .n{color:#5B9E2E}
 .entonnoir .l{font-family:var(--machine);text-transform:uppercase;font-size:11px;letter-spacing:.08em}
 .bar-h{border-radius:0;background:var(--papier-2);border:1px solid var(--trait);height:10px}
-.bar-h>i{border-radius:0;background:repeating-linear-gradient(-45deg,var(--encre) 0 4px,#33456B 4px 8px)}
-.bar-h.gold>i{background:repeating-linear-gradient(-45deg,#C9705A 0 4px,#D88A75 4px 8px)}
-.bar-h.vert>i{background:repeating-linear-gradient(-45deg,#5E8A58 0 4px,#79A273 4px 8px)}
-.prog i{border-radius:0}.prog i.on{background:#C9705A}
+.bar-h>i{border-radius:0;background:repeating-linear-gradient(-45deg,var(--encre) 0 4px,#35602A 4px 8px)}
+.bar-h.gold>i{background:repeating-linear-gradient(-45deg,#5B9E2E 0 4px,#74B442 4px 8px)}
+.bar-h.vert>i{background:repeating-linear-gradient(-45deg,#8CC63F 0 4px,#A3D45E 4px 8px)}
+.prog i{border-radius:0}.prog i.on{background:#5B9E2E}
 .etapes .et{background:var(--papier);border-color:var(--trait)}
 .etapes .et.cours{border-color:var(--encre);box-shadow:3px 3px 0 var(--kraft)}
 .bubble{background:var(--papier-2);border:1px solid var(--trait);border-radius:2px;font-family:var(--machine);font-size:13.5px}
@@ -178,7 +178,7 @@ tr.cliquable:hover td{background:#FBF5E3}
 /* ---------- Formulaires : lignes à remplir ---------- */
 input[type=text],input[type=date],input[type=search],input[type=email],input[type=password],input[type=tel],input[type=number],select,textarea{
   border-radius:2px;background:#FFFEFA;border:1px solid var(--trait);border-bottom:1.5px solid var(--encre-2)}
-input:focus,select:focus,textarea:focus{outline:2px solid #EAD8A8;border-color:var(--encre)}
+input:focus,select:focus,textarea:focus{outline:2px solid #D6EBB5;border-color:var(--encre)}
 label{font-family:var(--machine);text-transform:uppercase;letter-spacing:.08em;font-size:11px;color:var(--encre-2)}
 input[type=checkbox]{accent-color:var(--encre)}
 .onglets{background:var(--papier-2);border:1px solid var(--trait);border-radius:2px}
@@ -189,12 +189,12 @@ input[type=checkbox]{accent-color:var(--encre)}
 
 /* ---------- Divers ---------- */
 .alert{border-radius:2px;border-left-width:5px;font-size:14px}
-.alert.gold{background:#FBF1D6;border-color:var(--kraft-f)}
+.alert.gold{background:#F3F8E8;border-color:var(--kraft-f)}
 .alert.navy{background:var(--papier);border-color:var(--encre)}
 .alert.red{background:#F8E5DF;border-color:var(--tampon-rouge)}
-.modal{border-radius:2px;background:var(--papier);box-shadow:6px 6px 0 rgba(29,42,68,.35)}
-.modal-bg{background:rgba(29,42,68,.5)}
-.toast{border-radius:2px;font-family:var(--machine);box-shadow:3px 3px 0 #8C826A}
+.modal{border-radius:2px;background:var(--papier);box-shadow:6px 6px 0 rgba(34,64,27,.35)}
+.modal-bg{background:rgba(34,64,27,.5)}
+.toast{border-radius:2px;font-family:var(--machine);box-shadow:3px 3px 0 #7F8F6A}
 .menu-act .menu{border-radius:2px;background:var(--papier);box-shadow:4px 4px 0 var(--trait)}
 .menu a:hover,.menu button:hover{background:var(--papier-2);color:var(--encre)}
 .cal span{border-radius:0}.cal .in{background:var(--encre)}
@@ -202,12 +202,12 @@ input[type=checkbox]{accent-color:var(--encre)}
 .frise-bas{border-radius:0;background:var(--encre)}
 
 /* ---------- Accueil public : couverture de classeur ---------- */
-.hero{background:var(--kraft);border:1px solid var(--kraft-f);border-top:1px solid var(--kraft-f);box-shadow:0 3px 0 var(--kraft-f),0 7px 0 #CDAE6E,0 8px 0 var(--kraft-f);
-  background-image:repeating-linear-gradient(90deg,rgba(120,90,30,.04) 0 1px,transparent 1px 4px)}
-.hero h1{font-size:40px;color:#2A220F}
-.hero .sub{color:#4A3C1B}
-.hero img{background:var(--papier);padding:18px;border:1px solid #9C8650;transform:rotate(2deg);box-shadow:3px 3px 0 rgba(0,0,0,.12)}
-.space{border-top:0;border-left:6px solid #C9705A}.space.s2{border-left-color:var(--kraft-f)}.space.s3{border-left-color:#5E8A58}
+.hero{background:var(--kraft);border:1px solid var(--kraft-f);border-top:1px solid var(--kraft-f);box-shadow:0 3px 0 var(--kraft-f),0 7px 0 #A5CB78,0 8px 0 var(--kraft-f);
+  background-image:repeating-linear-gradient(90deg,rgba(60,100,30,.05) 0 1px,transparent 1px 4px)}
+.hero h1{font-size:40px;color:#1C3513}
+.hero .sub{color:#2E5220}
+.hero img{background:var(--papier);padding:18px;border:1px solid #7DA352;transform:rotate(2deg);box-shadow:3px 3px 0 rgba(0,0,0,.12)}
+.space{border-top:0;border-left:6px solid #5B9E2E}.space.s2{border-left-color:var(--kraft-f)}.space.s3{border-left-color:#8CC63F}
 @media(max-width:780px){.hero h1{font-size:28px}}
 .donut .vals span{background:none!important;border:2px solid currentColor;border-radius:2px;font-family:var(--machine);transform:rotate(-2deg)}
 .donut svg circle:first-child{stroke:var(--papier-2)}
@@ -218,3 +218,78 @@ input[type=checkbox]{accent-color:var(--encre)}
   .card{box-shadow:2px 2px 0 var(--papier-2),2px 2px 0 1px var(--trait)}
   .chemise .ref{font-size:11px}
 }
+
+/* =================================================================
+   Finitions « stylées » : polices, grain du papier, trombone,
+   en-têtes de fiche, graphiques à l'encre, petites animations.
+   ================================================================= */
+:root{
+  --titre:"Fraunces",Georgia,"Times New Roman","DejaVu Serif",serif;
+  --machine:"Courier Prime","Courier New","Courier 10 Pitch",Courier,monospace;
+  --texte:"Work Sans","Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;
+  --terre:#5B9E2E; --sauge:#8CC63F;
+  --grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .25 0 0 0 0 .38 0 0 0 0 .18 0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+body{font-family:var(--texte);font-size:14.5px;letter-spacing:.005em;-webkit-font-smoothing:antialiased}
+h1,h2,.chemise h1,.bandeau-profil h1,.hero h1{font-family:var(--titre);font-optical-sizing:auto;font-variation-settings:"SOFT" 50,"WONK" 1;letter-spacing:-.015em}
+::selection{background:#D6EBB5;color:var(--encre)}
+*{scrollbar-color:#A9B897 transparent;scrollbar-width:thin}
+
+/* Grain du papier sur les feuilles et le carton */
+.card,.profil-corps,.candidat,.accordeon,.modal,.etapes .et{background-image:var(--grain);background-color:var(--papier)}
+.tuile{background-image:var(--grain),repeating-linear-gradient(180deg,transparent 0 23px,#E3EAD4 23px 24px)}
+.chemise-corps,.bandeau-profil,.hero,.chemise-onglet{background-image:var(--grain),repeating-linear-gradient(90deg,rgba(60,100,30,.05) 0 1px,transparent 1px 4px)}
+
+/* Trombone sur la chemise */
+.chemise-corps{position:relative}
+.chemise-corps::after{content:"";position:absolute;top:-16px;right:42px;width:22px;height:62px;transform:rotate(8deg);
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 62'%3E%3Cpath d='M15 18v30a5 5 0 0 1-10 0V10a7 7 0 0 1 14 0v34a3 3 0 0 1-6 0V16' fill='none' stroke='%23878F9C' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat center/contain;filter:drop-shadow(1px 1px 0 rgba(0,0,0,.15))}
+.chemise .ref::before{content:"✦ ";color:var(--terre)}
+
+/* En-tête des autres pages : étiquette de fiche + titre surligné */
+.entete{position:relative;padding:22px 0 14px;border-bottom:3px double var(--encre);margin-bottom:24px}
+.entete::before{content:"FICHE";position:absolute;top:0;left:0;font-family:var(--machine);font-weight:700;font-size:10.5px;letter-spacing:.22em;color:#2E5220;background:var(--kraft);padding:2px 10px;border-radius:2px 2px 0 0;transform:translateY(-2px)}
+.entete h1{font-size:36px;display:inline;line-height:1.25;background:linear-gradient(transparent 64%,rgba(185,217,143,.65) 64% 92%,transparent 92%);padding:0 4px;margin-left:-4px}
+.entete .sub{font-family:var(--machine);font-size:13px;margin-top:8px}
+@media(max-width:900px){.entete h1{font-size:26px}}
+
+/* Titres de fiches : un petit numéro de rubrique */
+.card>h3:first-child::before,.card h3.titre-rub::before{content:"§ ";color:var(--terre)}
+
+/* Graphiques à l'encre */
+.donut svg circle:nth-of-type(1){stroke:#E7EDDA}
+.donut svg circle:nth-of-type(2){stroke:var(--terre);stroke-linecap:butt}
+.donut svg text{font-family:var(--titre);font-weight:600;fill:var(--encre)}
+svg polygon[fill="none"]{stroke:#D3DCC3;stroke-dasharray:3 3}
+svg line[stroke="#DDE2EC"]{stroke:#D3DCC3}
+svg polygon[stroke-width="1.5"]{fill:rgba(91,158,46,.25);stroke:var(--terre);stroke-width:2}
+svg rect[rx="7"]{fill:var(--papier);stroke:var(--encre)}
+svg text[font-size="10.5"]{font-family:var(--machine);fill:#5F6B55}
+
+/* Fiches qui bougent un peu */
+.card,.tuile,.candidat,.btn,.photo-id,#nav button{transition:transform .18s ease,box-shadow .18s ease,background-color .18s ease}
+.grid>.card:hover,.candidat:hover{transform:translate(-1px,-2px);box-shadow:5px 6px 0 var(--papier-2),5px 6px 0 1px var(--trait)}
+.grid>.tuile:nth-child(odd){transform:rotate(-.35deg)}
+.grid>.tuile:nth-child(even){transform:rotate(.3deg)}
+.grid>.tuile:hover{transform:rotate(0) translateY(-3px)}
+.chemise:hover .photo-id{transform:rotate(-4deg) scale(1.03)}
+#nav button:not(.on):hover{transform:translateX(4px)}
+@media(max-width:900px){#nav button:not(.on):hover{transform:none}}
+.btn:hover{transform:translate(-1px,-1px);box-shadow:3px 3px 0 #7F8F6A}
+
+/* Arrivée douce des pages */
+@keyframes poser{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+#app>*{animation:poser .38s cubic-bezier(.2,.7,.2,1) both}
+#app>*:nth-child(2){animation-delay:.05s}#app>*:nth-child(3){animation-delay:.1s}#app>*:nth-child(4){animation-delay:.15s}#app>*:nth-child(n+5){animation-delay:.2s}
+@keyframes tamponner{0%{opacity:0;transform:rotate(-2deg) scale(1.6)}60%{opacity:1;transform:rotate(-2deg) scale(.95)}100%{transform:rotate(-2deg) scale(1)}}
+.chemise .pill,.bandeau-profil .pill{animation:tamponner .5s .25s both}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* Tableaux : surligneur au survol */
+tr.cliquable:hover td{background:linear-gradient(transparent 20%,rgba(185,217,143,.45) 20% 80%,transparent 80%)}
+
+/* Accueil public */
+.hero h1{font-size:44px;font-weight:600}
+.hero .pill{font-size:12px}
+@media(max-width:780px){.hero h1{font-size:30px}}
+.space h3{font-size:12.5px}
