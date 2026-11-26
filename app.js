@@ -94,7 +94,9 @@ function radar(vals, noms) {
 }
 function salut() { const h = new Date().getHours(); return h < 12 ? "Bonjour" : h < 18 ? "Bon après-midi" : "Bonsoir"; }
 function bandeau(titre, sous, action) {
-  return `<section class="bandeau-accueil"><div class="avatar xl">${esc(initiales(nomComplet(ME.profil)))}</div><div class="sp"><p class="sur">${esc(salut())},</p><h1>${titre}</h1><p class="sub">${sous}</p></div>${action || ""}</section>`;
+  const ref = "EHR-" + String(ME.id || "").replace(/[^0-9a-f]/gi, "").slice(0, 6).toUpperCase();
+  const jour = new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+  return `<section class="chemise"><div class="chemise-onglet">${sous}</div><div class="chemise-corps"><div class="photo-id">${esc(initiales(nomComplet(ME.profil)))}</div><div class="sp"><p class="ref">Dossier n° ${ref} · ${jour}</p><h1>${esc(nomComplet(ME.profil))}</h1></div>${action ? `<div class="chemise-act">${action}</div>` : ""}</div></section>`;
 }
 function menuAct(el) { const m = el.closest(".menu-act"), ouvert = m.classList.contains("ouvert"); document.querySelectorAll(".menu-act.ouvert").forEach((x) => x.classList.remove("ouvert")); if (!ouvert) m.classList.add("ouvert"); }
 document.addEventListener("click", (e) => { if (!e.target.closest(".menu-act")) document.querySelectorAll(".menu-act.ouvert").forEach((x) => x.classList.remove("ouvert")); });
@@ -323,7 +325,7 @@ VIEWS.candidat = async () => {
   const aFaire = CAND.candidatures.filter((x) => x.statut === "Entretien IA à passer");
   const presel = CAND.candidatures.filter((x) => ["Présélectionné(e)", "Retenu(e)"].includes(x.statut)).length;
   const villes = [...new Set(CAND.offres.map((o) => o.ville).filter(Boolean))];
-  return bandeau(esc(p.prenoms.split(" ")[0] || "") + " 👋", "Espace Diplômés &amp; étudiants" + (p.ville ? " · " + esc(p.ville) : ""), verifie ? '<span class="pill p-green">✔ Diplôme vérifié</span>' : CAND.diplomes.length ? '<span class="pill p-gray">Diplôme en attente</span>' : "") + `
+  return bandeau("", "Espace Diplômés &amp; étudiants" + (p.ville ? " · " + esc(p.ville) : ""), verifie ? '<span class="pill p-green">Diplôme vérifié</span>' : CAND.diplomes.length ? '<span class="pill p-gray">Diplôme en attente</span>' : "") + `
 <div class="grid g4" style="margin-bottom:16px">
  ${tuile(compl + "<small>%</small>", "profil complété", "profil")}
  ${tuile(CAND.candidatures.length, "candidatures", "offres")}

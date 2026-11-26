@@ -1,0 +1,220 @@
+/* Excellent HR — « Dossier RH papier » : chemises cartonnées, intercalaires, feuilles, tampons.
+   Chargé après style.css : il en reprend la mise en page et change l'habillage. */
+:root{
+  --bureau:#E7E1D3;        /* plateau du bureau */
+  --papier:#FFFDF6;        /* feuille */
+  --papier-2:#F8F3E6;      /* feuille un peu jaunie */
+  --kraft:#D8B877;         /* chemise cartonnée */
+  --kraft-f:#B8954F;
+  --encre:#1D2A44;         /* encre bleu-noir */
+  --encre-2:#3A4766;
+  --trait:#D6CDB8;         /* filets d'impression */
+  --tampon-vert:#2F6B3B; --tampon-rouge:#B23A2E; --tampon-bleu:#27498C; --tampon-ocre:#A26A12;
+  --machine:"Courier New","Courier Prime","Courier 10 Pitch",Courier,monospace;
+  --titre:Georgia,"Times New Roman","DejaVu Serif",serif;
+  --nuit:var(--encre); --ink:var(--encre); --muted:#6E6858; --line:var(--trait);
+  --bg:var(--bureau); --card:var(--papier); --bleu:var(--tampon-bleu); --bleu-f:#1C3770; --bleu-l:#E6ECF6;
+  --r:3px;
+}
+body{background:var(--bureau);color:var(--encre);
+  background-image:radial-gradient(rgba(90,70,30,.05) 1px,transparent 1px);background-size:5px 5px}
+a{color:var(--tampon-bleu)}
+h1,h2{font-family:var(--titre);font-weight:400;color:var(--encre);letter-spacing:0}
+h1{font-size:30px}
+h3{font-family:var(--machine);font-size:12.5px;text-transform:uppercase;letter-spacing:.14em;font-weight:700;color:var(--encre-2);
+  padding-bottom:8px;border-bottom:1px solid var(--encre);margin-bottom:14px}
+.sub,.muted{color:var(--muted)}
+
+/* ---------- Classeur : dos cartonné + intercalaires ---------- */
+.cote{background:var(--encre);border-right:0;padding:22px 0 18px 14px;
+  background-image:repeating-linear-gradient(0deg,rgba(255,255,255,.025) 0 2px,transparent 2px 6px)}
+.cote .logo{background:var(--papier);padding:6px 10px;border-radius:2px;height:58px;margin:0 14px 26px 0;box-shadow:2px 2px 0 rgba(0,0,0,.25)}
+#nav{gap:6px;overflow:visible}
+#nav button{border-radius:4px 0 0 4px;padding:11px 14px;color:#C8CFDD;font-family:var(--machine);font-size:13px;letter-spacing:.04em;text-transform:uppercase;font-weight:700;
+  background:rgba(255,255,255,.05);border-left:4px solid transparent}
+#nav button:nth-child(4n+1){border-left-color:#D8B877}
+#nav button:nth-child(4n+2){border-left-color:#C9705A}
+#nav button:nth-child(4n+3){border-left-color:#7FA37A}
+#nav button:nth-child(4n+4){border-left-color:#8EA6CF}
+#nav button svg{color:inherit;opacity:.8}
+#nav button:hover{background:rgba(255,255,255,.12);color:#fff}
+#nav button.on{background:var(--bureau);color:var(--encre);box-shadow:none;margin-right:0;position:relative}
+#nav button.on svg{color:var(--encre)}
+#nav button.on::after{content:"";position:absolute;right:-1px;top:0;bottom:0;width:2px;background:var(--bureau)}
+.cote-pied{color:#9AA3B8;font-family:var(--machine);font-size:11px;margin:14px 14px 0 0;padding:8px 10px;border:1px dashed rgba(255,255,255,.25)}
+header.top{background:rgba(231,225,211,.94);border-bottom:1px solid var(--trait)}
+.cherche input,.cherche input[type=search]{border-radius:2px;background:var(--papier);border:1px solid var(--trait);box-shadow:inset 0 1px 0 rgba(0,0,0,.03);font-family:var(--machine)}
+@media(max-width:900px){
+  .cote{padding:0 4px calc(4px + env(safe-area-inset-bottom));background:var(--encre);border-top:0;box-shadow:0 -2px 0 var(--kraft-f)}
+  #nav{gap:3px}
+  #nav button{border-left:0;border-top:3px solid transparent;border-radius:0 0 5px 5px;font-size:9.5px;letter-spacing:.02em;padding:7px 3px}
+  #nav button:nth-child(4n+1){border-top-color:#D8B877}#nav button:nth-child(4n+2){border-top-color:#C9705A}
+  #nav button:nth-child(4n+3){border-top-color:#7FA37A}#nav button:nth-child(4n+4){border-top-color:#8EA6CF}
+  #nav button.on{background:var(--bureau);border-top-color:var(--bureau)}
+  #nav button.on::after{display:none}
+  header.top{background:var(--papier);border-bottom:2px solid var(--encre)}
+}
+
+/* ---------- Feuilles (cartes) ---------- */
+.card{background:var(--papier);border:1px solid var(--trait);border-radius:2px;
+  box-shadow:3px 3px 0 var(--papier-2),3px 3px 0 1px var(--trait)}
+.accordeon,.candidat,.etapes .et,.modal,.hero{border-radius:2px}
+.candidat{background:var(--papier);border-color:var(--trait);box-shadow:2px 2px 0 var(--trait)}
+.candidat.sel{border:1.5px solid var(--encre);box-shadow:3px 3px 0 var(--kraft)}
+.accordeon{background:var(--papier);border-color:var(--trait);box-shadow:none}
+.accordeon summary svg{color:var(--encre)}
+
+/* ---------- Fiches bristol (tuiles chiffrées) ---------- */
+.tuile{padding:16px 18px 14px;background:var(--papier);
+  background-image:linear-gradient(var(--papier),var(--papier)),repeating-linear-gradient(180deg,transparent 0 23px,#E6DFCB 23px 24px);
+  border-top:3px solid #C9705A}
+.tuile .v{font-family:var(--machine);font-weight:700;font-size:36px;color:var(--encre)}
+.tuile .l{font-family:var(--machine);text-transform:uppercase;letter-spacing:.1em;font-size:11px;color:var(--muted)}
+.tuile .ic{color:var(--kraft-f)}
+.grid>.tuile:nth-child(4n+2){border-top-color:var(--kraft-f)}
+.grid>.tuile:nth-child(4n+3){border-top-color:#5E8A58}
+.grid>.tuile:nth-child(4n+4){border-top-color:var(--tampon-bleu)}
+.kpi .v,.entonnoir .n,.score{font-family:var(--machine);font-weight:700}
+
+/* ---------- Chemise : en-tête des espaces ---------- */
+.chemise{margin:10px 0 26px;position:relative}
+.chemise-onglet{display:inline-block;background:var(--kraft);color:#3B2E12;font-family:var(--machine);font-weight:700;
+  font-size:12px;letter-spacing:.12em;text-transform:uppercase;padding:8px 22px 6px;border-radius:6px 6px 0 0;margin-left:18px;
+  border:1px solid var(--kraft-f);border-bottom:0}
+.chemise-corps{display:flex;align-items:center;gap:22px;flex-wrap:wrap;background:var(--kraft);border:1px solid var(--kraft-f);
+  border-radius:0 4px 4px 4px;padding:22px 26px;box-shadow:0 2px 0 var(--kraft-f),0 5px 0 #CDAE6E,0 6px 0 var(--kraft-f);
+  background-image:linear-gradient(90deg,rgba(255,255,255,.12),rgba(255,255,255,0) 40%),repeating-linear-gradient(90deg,rgba(120,90,30,.04) 0 1px,transparent 1px 4px)}
+.chemise h1{font-size:34px;margin:0;color:#2A220F}
+.chemise .ref{margin:0 0 4px;font-family:var(--machine);font-size:12.5px;color:#5C4A20}
+.photo-id{width:78px;height:92px;flex:none;background:var(--papier);border:1px solid #9C8650;display:grid;place-items:center;
+  font-family:var(--titre);font-size:28px;color:var(--encre);box-shadow:2px 2px 0 rgba(0,0,0,.12);transform:rotate(-2deg);position:relative}
+.photo-id::before{content:"";position:absolute;top:-7px;left:50%;width:30px;height:12px;margin-left:-15px;background:rgba(200,200,200,.7);
+  border:1px solid rgba(0,0,0,.08);transform:rotate(3deg)}
+.chemise-act{display:flex;gap:8px;align-items:center}
+.chemise .pill{transform:rotate(-4deg);font-size:13px;padding:6px 12px;background:rgba(255,253,246,.55)}
+@media(max-width:900px){
+  .chemise-corps{padding:16px;gap:14px}
+  .chemise h1{font-size:24px}
+  .photo-id{width:56px;height:66px;font-size:20px}
+  .chemise-onglet{margin-left:10px;font-size:10.5px;padding:7px 14px 5px}
+  .chemise-act{width:100%}
+}
+
+/* ---------- Dossier salarié ---------- */
+.bandeau-profil{background:var(--kraft);color:#2A220F;border-radius:0 4px 0 0;border:1px solid var(--kraft-f);border-bottom:0;padding:16px 26px 0;margin:10px 0 0;
+  background-image:repeating-linear-gradient(90deg,rgba(120,90,30,.04) 0 1px,transparent 1px 4px)}
+.bandeau-profil .retour{color:#5C4A20;font-family:var(--machine);font-size:12.5px}
+.bandeau-profil h1{color:#2A220F;font-size:34px;font-weight:400}
+.bandeau-profil .poste{color:#5C4A20;font-family:var(--machine)}
+.avatar.xxl{width:86px;height:100px;border-radius:0;background:var(--papier);color:var(--encre);font-family:var(--titre);font-weight:400;
+  border:1px solid #9C8650;box-shadow:2px 2px 0 rgba(0,0,0,.12);transform:rotate(-2deg);margin-bottom:-10px}
+.btn.ghost-blanc{background:var(--papier);color:var(--encre);border:1px solid var(--encre)}
+.btn.ghost-blanc:hover{background:#fff}
+.bandeau-profil .onglets-l{margin:16px 0 0 110px;gap:4px}
+.bandeau-profil .onglets-l button{background:#E4CB93;color:#5C4A20;border:1px solid var(--kraft-f);border-bottom:0;border-radius:6px 6px 0 0;
+  font-family:var(--machine);text-transform:uppercase;letter-spacing:.08em;font-size:12px;padding:9px 18px}
+.bandeau-profil .onglets-l button.on{background:var(--papier);color:var(--encre);position:relative;top:1px}
+.profil-corps{background:var(--papier);border:1px solid var(--trait);padding:22px;margin-bottom:20px;box-shadow:3px 3px 0 var(--trait)}
+.profil-corps .card{box-shadow:none}
+.vitals .v{flex-direction:row;align-items:baseline;gap:6px;border-bottom:0;padding:7px 0;font-family:var(--machine);font-size:13px}
+.vitals .v span{order:1;color:var(--muted);font-size:13px;white-space:nowrap}
+.vitals .v::before{content:"";order:2;flex:1;min-width:12px;border-bottom:2px dotted #B8AE95;transform:translateY(-4px)}
+.vitals .v b{order:3;font-weight:700;font-size:13px;text-align:right}
+@media(max-width:900px){.bandeau-profil{padding:12px 14px 0}.bandeau-profil h1{font-size:24px}.avatar.xxl{width:58px;height:68px;font-size:20px;margin-bottom:0}.bandeau-profil .onglets-l{margin:10px 0 0}.profil-corps{padding:12px}}
+.onglets-l{border-bottom:1px solid var(--encre)}
+.onglets-l button{color:var(--encre-2);font-family:var(--machine);text-transform:uppercase;font-size:12.5px;letter-spacing:.06em}
+.onglets-l button.on{color:var(--encre);box-shadow:inset 0 -3px 0 #C9705A}
+.rubriques{border-left:2px solid var(--encre)}
+.rubriques a{color:var(--encre-2);font-family:var(--machine);font-size:12.5px}
+
+/* ---------- Tampons (statuts) ---------- */
+.pill{background:transparent!important;border:2px solid currentColor;border-radius:3px;font-family:var(--machine);font-weight:700;
+  text-transform:uppercase;letter-spacing:.06em;font-size:11px;padding:3px 8px;transform:rotate(-2deg);opacity:.9;
+  -webkit-mask-image:radial-gradient(circle at 30% 40%,#000 60%,rgba(0,0,0,.75) 61%,#000 75%);}
+.p-navy{color:var(--tampon-bleu)}.p-gold,.p-orange{color:var(--tampon-ocre)}.p-green{color:var(--tampon-vert)}
+.p-red{color:var(--tampon-rouge)}.p-gray{color:#7A7466}
+.chip{border-radius:2px;background:var(--papier-2);border:1px solid var(--trait);color:var(--encre-2);font-family:var(--machine)}
+.puce{border-radius:2px;background:var(--encre);font-family:var(--machine)}
+.termine{background:none;color:var(--tampon-vert);border:2px solid currentColor;border-radius:2px;font-family:var(--machine);text-transform:uppercase;transform:rotate(-3deg)}
+
+/* ---------- Boutons : tampons encreurs ---------- */
+.btn{border-radius:3px;background:var(--encre);box-shadow:2px 2px 0 #8C826A;font-weight:700;transition:transform .08s,box-shadow .08s}
+.btn:hover{background:#2A3A5C}
+.btn:active{transform:translate(2px,2px);box-shadow:none}
+.btn.bleu,.btn.gold{background:#C9705A;color:#fff}.btn.bleu:hover,.btn.gold:hover{background:#B35E49}
+.btn.ghost{background:var(--papier);color:var(--encre);border:1.5px solid var(--encre)}
+.btn.ghost:hover{background:#fff}
+.btn.red{background:var(--tampon-rouge)}
+.ico-btn{border-radius:2px;background:var(--papier);border-color:var(--trait)}
+.ico-btn:hover{background:var(--papier-2);color:var(--encre);border-color:var(--encre)}
+
+/* ---------- Registres (tableaux) ---------- */
+th{font-family:var(--machine);color:var(--encre);border-bottom:2px solid var(--encre);letter-spacing:.08em}
+td{border-bottom:1px dashed var(--trait)}
+tr.cliquable:hover td{background:#FBF5E3}
+.ligne{border-bottom:1px dashed var(--trait)}
+
+/* ---------- Avatars, scores ---------- */
+.avatar{border-radius:2px;background:var(--encre);font-family:var(--titre);font-weight:400}
+.avatar.xl{border-radius:2px;box-shadow:none}
+.carre{border-radius:50%;background:none!important;border:2.5px solid currentColor;font-family:var(--machine);transform:rotate(-6deg)}
+.c-bleu{color:var(--tampon-vert)}.c-orange{color:var(--tampon-ocre)}.c-jaune{color:var(--tampon-rouge)}.c-gris{color:#9A9384}
+.entonnoir .et::before{background:var(--trait);height:2px}
+.entonnoir .et.on::before{background:#C9705A}
+.entonnoir .et::after{border-radius:0;background:var(--trait);box-shadow:none;border:0;transform:rotate(45deg)}
+.entonnoir .et.on::after{background:#C9705A;box-shadow:none}
+.entonnoir .et.on .n{color:#C9705A}
+.entonnoir .l{font-family:var(--machine);text-transform:uppercase;font-size:11px;letter-spacing:.08em}
+.bar-h{border-radius:0;background:var(--papier-2);border:1px solid var(--trait);height:10px}
+.bar-h>i{border-radius:0;background:repeating-linear-gradient(-45deg,var(--encre) 0 4px,#33456B 4px 8px)}
+.bar-h.gold>i{background:repeating-linear-gradient(-45deg,#C9705A 0 4px,#D88A75 4px 8px)}
+.bar-h.vert>i{background:repeating-linear-gradient(-45deg,#5E8A58 0 4px,#79A273 4px 8px)}
+.prog i{border-radius:0}.prog i.on{background:#C9705A}
+.etapes .et{background:var(--papier);border-color:var(--trait)}
+.etapes .et.cours{border-color:var(--encre);box-shadow:3px 3px 0 var(--kraft)}
+.bubble{background:var(--papier-2);border:1px solid var(--trait);border-radius:2px;font-family:var(--machine);font-size:13.5px}
+.bubble.me{background:var(--papier);border-radius:2px}
+
+/* ---------- Formulaires : lignes à remplir ---------- */
+input[type=text],input[type=date],input[type=search],input[type=email],input[type=password],input[type=tel],input[type=number],select,textarea{
+  border-radius:2px;background:#FFFEFA;border:1px solid var(--trait);border-bottom:1.5px solid var(--encre-2)}
+input:focus,select:focus,textarea:focus{outline:2px solid #EAD8A8;border-color:var(--encre)}
+label{font-family:var(--machine);text-transform:uppercase;letter-spacing:.08em;font-size:11px;color:var(--encre-2)}
+input[type=checkbox]{accent-color:var(--encre)}
+.onglets{background:var(--papier-2);border:1px solid var(--trait);border-radius:2px}
+.onglets button{border-radius:2px;font-family:var(--machine);text-transform:uppercase;font-size:12px;letter-spacing:.06em}
+.onglets button.on{background:var(--papier);color:var(--encre);box-shadow:2px 2px 0 var(--trait)}
+.choix-type button{border-radius:2px;background:var(--papier)}
+.choix-type button.on{border-color:var(--encre);background:var(--papier-2);color:var(--encre)}
+
+/* ---------- Divers ---------- */
+.alert{border-radius:2px;border-left-width:5px;font-size:14px}
+.alert.gold{background:#FBF1D6;border-color:var(--kraft-f)}
+.alert.navy{background:var(--papier);border-color:var(--encre)}
+.alert.red{background:#F8E5DF;border-color:var(--tampon-rouge)}
+.modal{border-radius:2px;background:var(--papier);box-shadow:6px 6px 0 rgba(29,42,68,.35)}
+.modal-bg{background:rgba(29,42,68,.5)}
+.toast{border-radius:2px;font-family:var(--machine);box-shadow:3px 3px 0 #8C826A}
+.menu-act .menu{border-radius:2px;background:var(--papier);box-shadow:4px 4px 0 var(--trait)}
+.menu a:hover,.menu button:hover{background:var(--papier-2);color:var(--encre)}
+.cal span{border-radius:0}.cal .in{background:var(--encre)}
+.frise .cases i{border-radius:0}
+.frise-bas{border-radius:0;background:var(--encre)}
+
+/* ---------- Accueil public : couverture de classeur ---------- */
+.hero{background:var(--kraft);border:1px solid var(--kraft-f);border-top:1px solid var(--kraft-f);box-shadow:0 3px 0 var(--kraft-f),0 7px 0 #CDAE6E,0 8px 0 var(--kraft-f);
+  background-image:repeating-linear-gradient(90deg,rgba(120,90,30,.04) 0 1px,transparent 1px 4px)}
+.hero h1{font-size:40px;color:#2A220F}
+.hero .sub{color:#4A3C1B}
+.hero img{background:var(--papier);padding:18px;border:1px solid #9C8650;transform:rotate(2deg);box-shadow:3px 3px 0 rgba(0,0,0,.12)}
+.space{border-top:0;border-left:6px solid #C9705A}.space.s2{border-left-color:var(--kraft-f)}.space.s3{border-left-color:#5E8A58}
+@media(max-width:780px){.hero h1{font-size:28px}}
+.donut .vals span{background:none!important;border:2px solid currentColor;border-radius:2px;font-family:var(--machine);transform:rotate(-2deg)}
+.donut svg circle:first-child{stroke:var(--papier-2)}
+.donut svg text{font-family:var(--machine)}
+@media(max-width:900px){
+  .grid.g4{gap:10px}
+  .tuile{padding:12px 12px 10px}.tuile .v{font-size:26px}.tuile .l{font-size:10px;letter-spacing:.06em}
+  .card{box-shadow:2px 2px 0 var(--papier-2),2px 2px 0 1px var(--trait)}
+  .chemise .ref{font-size:11px}
+}
