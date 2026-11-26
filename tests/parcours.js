@@ -42,6 +42,8 @@ async function creerOrg(p, nom, ville, secteur) {
   const R = await nouvelle(b, "Entreprise");
   await inscrire(R, "entreprise", "Marc", "YAO", "rh@lagune.ci");
   await creerOrg(R, "Lagune Énergie", "Abidjan", "Énergie");
+  ok((await texte(R)).includes("Tableau de bord"), "entreprise : tableau de bord affiché");
+  await R.click('#nav button:has-text("Offres")'); await pause(R);
   await R.click('button:has-text("+ Publier une offre")');
   await R.fill("#of-titre", "Ingénieur procédés gaz junior"); await R.fill("#of-desc", "Suivi des installations de traitement du gaz, génie pétrolier, sécurité HSE.");
   await R.click('.modal button:has-text("Publier")'); await pause(R, 1200);
@@ -69,7 +71,7 @@ async function creerOrg(p, nom, ville, secteur) {
   for (let i = 0; i < 10; i++) {
     if (i === 3) await photo(C, "candidat-entretien");
     await C.fill("#rep", reps[i % 2] + " Réponse " + (i + 1) + ", avec un exemple concret, une méthode précise et un résultat mesuré de 15 %.");
-    await C.click('.card button.btn:not(.ghost):not(.sm)'); await pause(C, 900);
+    await C.click('#btnRep'); await pause(C, 900);
   }
   ok((await texte(C)).includes("Entretien envoyé"), "candidat : entretien terminé et envoyé");
 
@@ -80,11 +82,12 @@ async function creerOrg(p, nom, ville, secteur) {
   ok((await texte(E)).includes("✔ Validé"), "école : diplôme validé");
 
   /* 5. L'entreprise présélectionne, valide la short-list et embauche */
-  await R.click('#nav button:has-text("Présélection")'); await pause(R, 1300);
+  await R.click('#nav button:has-text("Candidatures")'); await pause(R, 1300);
   ok((await texte(R)).includes("Henri-Joel KOUADIO") && (await texte(R)).includes("✔ Diplôme vérifié"), "entreprise : candidat classé, diplôme vérifié visible");
-  await R.check('table input[type=checkbox]'); await pause(R, 1200);
+  await R.check('.liste-cand input[type=checkbox]'); await pause(R, 1200);
   await R.click('button:has-text("Valider la short-list")'); await R.click('.modal button:has-text("Confirmer")'); await pause(R, 1200);
   ok((await texte(R)).includes("Présélectionné(e)"), "entreprise : short-list validée");
+  await photo(R, "entreprise-candidatures");
   await R.click('button:has-text("Détail")'); await pause(R, 500);
   await photo(R, "entreprise-detail");
   await R.click('.modal button:has-text("Retenir et passer en RH")'); await R.selectOption("#e-contrat", "CDD");
@@ -107,6 +110,13 @@ async function creerOrg(p, nom, ville, secteur) {
   await R.click('button:has-text("Valider")'); await pause(R, 1300);
   ok((await texte(R)).includes("21 j"), "entreprise : congé validé, solde 26 → 21");
   await photo(R, "entreprise-rh");
+  await R.click('tr.cliquable'); await pause(R, 1300);
+  ok((await texte(R)).includes("Dossier salarié") && (await texte(R)).includes("Frise chronologique"), "entreprise : dossier salarié avec frise");
+  await R.click('summary:has-text("Congés")'); await pause(R, 300);
+  await photo(R, "entreprise-dossier");
+  await R.click('#nav button:has-text("Tableau de bord")'); await pause(R, 1400);
+  ok((await texte(R)).includes("Analyse des entretiens"), "entreprise : tableau de bord avec analyse");
+  await photo(R, "entreprise-tableau");
   await C.reload(); await pause(C, 1300);
   ok((await texte(C)).includes("Validé") && (await texte(C)).includes("21 j"), "salarié : voit la validation et son nouveau solde");
 
@@ -123,7 +133,7 @@ async function creerOrg(p, nom, ville, secteur) {
   /* 8. Déconnexion / reconnexion */
   await C.click('#nav button:has-text("Profil")'); await pause(C);
   await C.click('button:has-text("Se déconnecter")'); await pause(C);
-  await C.click('#nav button:has-text("Se connecter")'); await pause(C, 400);
+  await C.click('#qui button:has-text("Se connecter")'); await pause(C, 400);
   await C.fill("#f-email", "candidat@test.ci"); await C.fill("#f-mdp", "mauvais1234"); await C.click('.card button.btn:has-text("Se connecter")'); await pause(C, 900);
   ok((await C.textContent("#toast")).includes("incorrect"), "connexion : mauvais mot de passe refusé en français");
   await C.fill("#f-mdp", "motdepasse1"); await C.click('.card button.btn:has-text("Se connecter")'); await pause(C, 1300);
