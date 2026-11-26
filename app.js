@@ -208,7 +208,15 @@ async function connexion(b) {
     else msgAuth("<b>" + esc(e.message || "Connexion impossible.") + "</b>" + (e.code === "invalid_credentials" || /incorrect/.test(e.message || "") ? '<br>Vérifiez l\'adresse et le mot de passe, ou cliquez sur « Mot de passe oublié ? ».' : ""), true);
     return;
   }
-  await chargerMoi(); toast("Bienvenue " + (ME?.profil.prenoms || "")); go(pageDepart());
+  try { await chargerMoi(); }
+  catch (e) {
+    SB.deconnecter(); ME = null;
+    const droits = e.code === "42501" || /droit/i.test(e.message || "");
+    msgAuth("<b>Mot de passe accepté, mais votre espace n'a pas pu s'ouvrir.</b><br>" + esc(e.message || "Erreur inconnue.") + (droits ? "<br>Il manque les droits de lecture sur le serveur : relancez le fichier <code>supabase/schema.sql</code> dans Supabase (SQL Editor)." : ""), true);
+    return;
+  }
+  if (!ME) { msgAuth("<b>Mot de passe accepté, mais aucun profil n'existe pour ce compte.</b><br>Le compte a sans doute été créé avant l'installation de la base. Créez un nouveau compte avec une autre adresse, ou contactez l'administrateur.", true); return; }
+  toast("Bienvenue " + (ME.profil.prenoms || "")); go(pageDepart());
 }
 async function renvoyerLien(a) {
   const email = valeur("f-email"); if (!email) return msgAuth("Saisissez votre e-mail d'abord.", true);
