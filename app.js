@@ -92,6 +92,10 @@ function radar(vals, noms) {
   s += `<rect x="${cx - 26}" y="${cy - 15}" width="52" height="30" rx="7" fill="#fff" stroke="#DDE2EC"/><text x="${cx}" y="${cy + 6}" text-anchor="middle" font-size="16" font-weight="800" fill="var(--nuit)">${moy}</text>`;
   return s + "</svg>";
 }
+function salut() { const h = new Date().getHours(); return h < 12 ? "Bonjour" : h < 18 ? "Bon après-midi" : "Bonsoir"; }
+function bandeau(titre, sous, action) {
+  return `<section class="bandeau-accueil"><div class="avatar xl">${esc(initiales(nomComplet(ME.profil)))}</div><div class="sp"><p class="sur">${esc(salut())},</p><h1>${titre}</h1><p class="sub">${sous}</p></div>${action || ""}</section>`;
+}
 function menuAct(el) { const m = el.closest(".menu-act"), ouvert = m.classList.contains("ouvert"); document.querySelectorAll(".menu-act.ouvert").forEach((x) => x.classList.remove("ouvert")); if (!ouvert) m.classList.add("ouvert"); }
 document.addEventListener("click", (e) => { if (!e.target.closest(".menu-act")) document.querySelectorAll(".menu-act.ouvert").forEach((x) => x.classList.remove("ouvert")); });
 
@@ -123,6 +127,7 @@ async function render() {
   const parent = CACHEES[page];
   if (!liste.some(([k]) => k === page) && !(parent && liste.some(([k]) => k === parent))) page = liste[0][0];
   const actif = parent || page;
+  document.body.classList.toggle("public", !ME);
   $("#nav").innerHTML = ME ? liste.map(([k, l, i], idx) => `${idx === liste.length - 1 ? '<span class="sep"></span>' : ""}<button class="${k === actif ? "on" : ""}" onclick="go('${k}')" title="${l}">${ico(i, 22)}<span>${l}</span></button>`).join("") : "";
   $("#qui").innerHTML = ME
     ? `<span class="avatar sm" title="${esc(ME.email || "")}" onclick="go('profil')">${esc(initiales(nomComplet(ME.profil)))}</span>`
@@ -318,8 +323,7 @@ VIEWS.candidat = async () => {
   const aFaire = CAND.candidatures.filter((x) => x.statut === "Entretien IA à passer");
   const presel = CAND.candidatures.filter((x) => ["Présélectionné(e)", "Retenu(e)"].includes(x.statut)).length;
   const villes = [...new Set(CAND.offres.map((o) => o.ville).filter(Boolean))];
-  return `<div class="entete"><div><h1>Bonjour ${esc(p.prenoms.split(" ")[0] || "")} 👋</h1><p class="sub">Espace Diplômés &amp; étudiants</p></div>
- ${verifie ? '<span class="pill p-green">✔ Diplôme vérifié</span>' : CAND.diplomes.length ? '<span class="pill p-gray">Diplôme en attente</span>' : ""}</div>
+  return bandeau(esc(p.prenoms.split(" ")[0] || "") + " 👋", "Espace Diplômés &amp; étudiants" + (p.ville ? " · " + esc(p.ville) : ""), verifie ? '<span class="pill p-green">✔ Diplôme vérifié</span>' : CAND.diplomes.length ? '<span class="pill p-gray">Diplôme en attente</span>' : "") + `
 <div class="grid g4" style="margin-bottom:16px">
  ${tuile(compl + "<small>%</small>", "profil complété", "profil")}
  ${tuile(CAND.candidatures.length, "candidatures", "offres")}
@@ -449,7 +453,7 @@ VIEWS.tableau = async () => {
   const passes = cands.filter((c) => c.scores).length;
   const taux = cands.length ? Math.round(passes / cands.length * 100) : 0;
   const coul = moy >= 75 ? "var(--green)" : moy >= 60 ? "var(--orange)" : "var(--red)";
-  return `<div class="entete"><div><h1>Tableau de bord</h1><p class="sub">${esc(ME.org.nom)}</p></div><button class="btn bleu" onclick="go('offres');setTimeout(()=>formOffre(),300)">${ico("plus", 16)} Publier une offre</button></div>
+  return bandeau(esc(ME.profil.prenoms.split(" ")[0] || ""), "Tableau de bord · " + esc(ME.org.nom), `<button class="btn bleu" onclick="go('offres');setTimeout(()=>formOffre(),300)">${ico("plus", 16)} Publier une offre</button>`) + `
 <div class="grid g-tdb" style="align-items:start">
  <div class="grid" style="gap:16px;align-content:start">
   <div class="grid" style="grid-template-columns:repeat(3,1fr);gap:16px">
@@ -704,11 +708,24 @@ VIEWS.fiche = async () => {
    ${panneau("n", "Documents", "Attestation de travail", `<button class="btn sm" onclick="attestation('${e.id}')">${ico("doc", 15)} Générer l'attestation</button>`, "p-docs")}
   </div></div>`;
   const conge = `<div class="card"><h3>Congés de ${esc(e.nom)}</h3>${conges.length ? conges.slice().reverse().map((c) => `<div class="ligne"><span class="sq ${c.statut === "Validé" ? "b" : c.statut === "Refusé" ? "r" : "o"}"></span><span class="sp">${fr(c.du)} → ${fr(c.au)} · <b>${c.jours} j</b>${c.motif ? ` <span class="muted">· ${esc(c.motif)}</span>` : ""}</span><span class="pill ${c.statut === "Validé" ? "p-green" : c.statut === "Refusé" ? "p-red" : "p-gold"}">${c.statut}</span></div>`).join("") : '<div class="vide">Aucune demande.</div>'}</div>`;
-  return `<a href="#" class="small" onclick="go('rh');return false">← Personnel</a>
-<div class="fiche-tete" style="margin-top:10px"><div class="avatar xl">${esc(initiales(e.nom))}</div><div class="sp"><h1>${esc(e.nom)}</h1><div class="row" style="gap:6px"><span class="chip">${e.contrat}</span>${e.poste ? `<span class="chip">${esc(e.poste)}</span>` : ""}${e.service ? `<span class="chip">${esc(e.service)}</span>` : ""}<span class="chip">Solde ${e.solde} j</span></div></div>
- <button class="ico-btn" title="Attestation" onclick="attestation('${e.id}')">${ico("doc", 17)}</button><button class="ico-btn" title="Modifier" onclick="formEmploye('${e.id}')">${ico("points", 17)}</button></div>
-<div class="onglets-l"><button class="${ongletFiche === "dossier" ? "on" : ""}" onclick="ongletFiche='dossier';render()">Dossier salarié</button><button class="${ongletFiche === "conges" ? "on" : ""}" onclick="ongletFiche='conges';render()">Congés</button></div>
-${ongletFiche === "dossier" ? dossier : conge}`;
+  return `<section class="bandeau-profil">
+ <a href="#" class="retour" onclick="go('rh');return false">← Personnel</a>
+ <div class="fiche-tete"><div class="avatar xxl">${esc(initiales(e.nom))}</div><div class="sp"><h1>${esc(e.nom)}</h1><p class="poste">${esc(e.poste || "—")}${e.service ? " · " + esc(e.service) : ""}</p></div>
+  <button class="btn ghost-blanc" onclick="attestation('${e.id}')">${ico("doc", 16)} Attestation</button><button class="btn ghost-blanc" onclick="formEmploye('${e.id}')">Modifier</button></div>
+ <div class="onglets-l"><button class="${ongletFiche === "dossier" ? "on" : ""}" onclick="ongletFiche='dossier';render()">Dossier salarié</button><button class="${ongletFiche === "conges" ? "on" : ""}" onclick="ongletFiche='conges';render()">Congés</button></div>
+</section>
+<div class="profil-corps">
+ <aside class="vitals card"><h3>En bref</h3>
+  <div class="v"><span>Contrat</span><b>${e.contrat}</b></div>
+  <div class="v"><span>Fin du contrat</span><b>${fr(e.fin)}</b></div>
+  <div class="v"><span>Solde de congés</span><b>${e.solde} jours</b></div>
+  <div class="v"><span>Entré(e) le</span><b>${fr(e.cree_le)}</b></div>
+  <div class="v"><span>Compte</span><b>${e.user_id ? "Relié" : "Code " + esc(e.code)}</b></div>
+ </aside>
+ <div class="profil-principal">
+${ongletFiche === "dossier" ? dossier : conge}
+ </div>
+</div>`;
 };
 
 async function deciderConge(id, ok, b) { await occupe(b, SB.rpc("decider_conge", { p_id: id, p_valide: ok }), ok ? "Congé validé" : "Congé refusé"); render(); }
@@ -800,7 +817,7 @@ VIEWS.ecole = async () => {
   const min = fil.length ? Math.min(...fil.map((f) => f.t)) : 0;
   const taux = st.valides ? Math.round(st.en_emploi / st.valides * 100) : 0;
   const q = filtreEcole.toLowerCase(), vus = diplomes.filter((d) => !q || (nomComplet(P[d.user_id]) + " " + d.intitule + " " + d.filiere).toLowerCase().includes(q));
-  return `<div class="entete"><div><h1>Suivi de l'insertion</h1><p class="sub">${esc(ME.org.nom)}</p></div></div>
+  return bandeau(esc(ME.profil.prenoms.split(" ")[0] || ""), "Suivi de l'insertion · " + esc(ME.org.nom)) + `
 <div class="grid g-tdb">
  <div class="grid" style="gap:16px;align-content:start">
   <div class="grid" style="grid-template-columns:repeat(3,1fr);gap:16px">
