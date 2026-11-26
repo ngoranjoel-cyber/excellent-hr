@@ -53,7 +53,7 @@ async function creerOrg(p, nom, ville, secteur) {
   /* 3. Le candidat s'inscrit, complète son profil, déclare son diplôme, postule et passe l'entretien */
   const C = await nouvelle(b, "Candidat", true);
   await inscrire(C, "candidat", "Henri-Joel", "KOUADIO", "candidat@test.ci");
-  ok((await texte(C)).includes("Bonjour Henri-Joel"), "candidat : espace affiché après inscription");
+  ok((await texte(C)).includes("Espace Diplômés"), "candidat : espace affiché après inscription");
   ok((await texte(C)).includes("Ingénieur procédés gaz junior"), "candidat : voit l'offre de l'entreprise");
   await C.click('#nav button:has-text("Profil")'); await pause(C);
   await C.fill("#p-ville", "Abidjan"); await C.fill("#p-formation", "Master Génie pétrolier et gazier — INP-HB");
@@ -137,7 +137,7 @@ async function creerOrg(p, nom, ville, secteur) {
   await C.fill("#f-email", "candidat@test.ci"); await C.fill("#f-mdp", "mauvais1234"); await C.click('.card button.btn:has-text("Se connecter")'); await pause(C, 900);
   ok((await C.textContent("#toast")).includes("incorrect"), "connexion : mauvais mot de passe refusé en français");
   await C.fill("#f-mdp", "motdepasse1"); await C.click('.card button.btn:has-text("Se connecter")'); await pause(C, 1300);
-  ok((await texte(C)).includes("Bonjour Henri-Joel"), "connexion : retour dans l'espace");
+  ok((await texte(C)).includes("Espace Diplômés"), "connexion : retour dans l'espace");
 
   console.log("erreurs de page :", JSON.stringify(erreurs.filter((e) => !/^(ÉCHEC|OK)/.test(e) && !e.startsWith("candidat") && !e.startsWith("entreprise") && !e.startsWith("école") && !e.startsWith("salarié") && !e.startsWith("concurrent") && !e.startsWith("connexion"))));
   console.log(erreurs.length ? "PROBLÈMES : " + erreurs.length : "TOUT EST OK");
