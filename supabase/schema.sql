@@ -187,6 +187,15 @@ begin
 end $$;
 drop trigger if exists a_l_inscription on auth.users;
 create trigger a_l_inscription after insert on auth.users for each row execute function public.nouvel_utilisateur();
+-- Comptes créés avant l'installation de ce schéma : on leur crée le profil manquant.
+insert into public.profils (id, type, nom, prenoms, telephone)
+select u.id,
+       case when u.raw_user_meta_data->>'type' in ('candidat', 'entreprise', 'ecole') then u.raw_user_meta_data->>'type' else 'candidat' end,
+       left(coalesce(u.raw_user_meta_data->>'nom', u.raw_user_meta_data->>'family_name', ''), 80),
+       left(coalesce(u.raw_user_meta_data->>'prenoms', u.raw_user_meta_data->>'given_name', ''), 120),
+       left(coalesce(u.raw_user_meta_data->>'telephone', ''), 30)
+from auth.users u
+on conflict (id) do nothing;
 
 create or replace function public.maj_profil() returns trigger language plpgsql as $$
 begin new.maj := now(); return new; end $$;
@@ -210,6 +219,12 @@ revoke insert, update, delete on public.organisations, public.organisations_code
   public.diplomes, public.candidatures, public.employes, public.conges from anon, authenticated;
 revoke all on public.organisations, public.organisations_codes, public.profils, public.diplomes,
   public.offres, public.candidatures, public.employes, public.conges from anon;
+
+-- Droits de lecture explicites pour les comptes connectés (les projets Supabase récents ne les donnent
+-- plus automatiquement) ; ce que chacun voit vraiment reste filtré par les règles RLS ci-dessous.
+grant usage on schema public to anon, authenticated;
+grant select on public.organisations, public.organisations_codes, public.profils, public.diplomes,
+  public.offres, public.candidatures, public.employes, public.conges to authenticated;
 
 -- Organisations : noms visibles par tous les comptes (pour choisir son école) ; modifiables par les membres.
 drop policy if exists org_lecture on public.organisations;
