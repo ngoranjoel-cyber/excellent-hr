@@ -17,6 +17,24 @@ async function nouvelle(b, nom, mobile) {
 const pause = (p, t) => p.waitForTimeout(t || 700);
 const photo = (p, nom) => p.screenshot({ path: `${IMAGES}/${String(++n).padStart(2, "0")}-${nom}.png`, fullPage: true });
 const texte = (p) => p.textContent("#app");
+/* Fabrique un petit CV Word (.docx) : zip avec word/document.xml compressé (deflate) */
+function docx(lignes) {
+  const zlib = require("zlib");
+  const xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>' +
+    lignes.map((l) => `<w:p><w:r><w:t xml:space="preserve">${l.replace(/&/g, "&amp;").replace(/</g, "&lt;")}</w:t></w:r></w:p>`).join("") + "</w:body></w:document>";
+  const nom = Buffer.from("word/document.xml"), brut = Buffer.from(xml), comp = zlib.deflateRawSync(brut);
+  let crc = -1; for (const o of brut) { crc ^= o; for (let k = 0; k < 8; k++) crc = (crc >>> 1) ^ (0xEDB88320 & -(crc & 1)); } crc = (crc ^ -1) >>> 0;
+  const loc = Buffer.alloc(30); loc.writeUInt32LE(0x04034b50, 0); loc.writeUInt16LE(20, 4); loc.writeUInt16LE(8, 8); loc.writeUInt32LE(crc, 14); loc.writeUInt32LE(comp.length, 18); loc.writeUInt32LE(brut.length, 22); loc.writeUInt16LE(nom.length, 26);
+  const cen = Buffer.alloc(46); cen.writeUInt32LE(0x02014b50, 0); cen.writeUInt16LE(20, 4); cen.writeUInt16LE(20, 6); cen.writeUInt16LE(8, 10); cen.writeUInt32LE(crc, 16); cen.writeUInt32LE(comp.length, 20); cen.writeUInt32LE(brut.length, 24); cen.writeUInt16LE(nom.length, 28); cen.writeUInt32LE(0, 42);
+  const debutCen = 30 + nom.length + comp.length, fin = Buffer.alloc(22);
+  fin.writeUInt32LE(0x06054b50, 0); fin.writeUInt16LE(1, 8); fin.writeUInt16LE(1, 10); fin.writeUInt32LE(46 + nom.length, 12); fin.writeUInt32LE(debutCen, 16);
+  return Buffer.concat([loc, nom, comp, cen, nom, fin]);
+}
+const CV_TEST = ["KOUADIO N'goran Henri-Joel", "Ingénieur pétrolier et gazier", "henri.kouadio@exemple.ci | +225 07 08 09 10 11 | Abidjan", "PROFIL", "Jeune ingénieur des mines spécialisé pétrole, rigoureux, orienté sécurité et performance des procédés.",
+  "EXPÉRIENCES PROFESSIONNELLES", "Stagiaire ingénieur procédés – Foxtrot International | Abidjan", "Mars 2024 – Août 2024", "• Modèle prédictif du pouvoir calorifique du gaz livré à AZITO", "• Suivi des installations de traitement du gaz",
+  "Operations Engineer – Genser Energy | Prestea", "2025 – Présent", "• Exploitation d'une centrale électrique au gaz",
+  "FORMATION", "Master Génie pétrolier et gazier – INP-HB | Yamoussoukro", "2021 – 2024", "Mention Bien", "Baccalauréat série C – Lycée classique d'Abidjan", "2018",
+  "COMPÉTENCES", "HYSYS, Excel avancé, Python, Analyse de risques, Bilan matière", "LANGUES", "Français : langue maternelle", "Anglais : courant (B2)", "CENTRES D'INTÉRÊT", "Lecture, football, bénévolat"];
 async function inscrire(p, type, prenoms, nom, email) {
   await p.click(`button:has-text("${type === "candidat" ? "Je cherche un emploi" : type === "entreprise" ? "Je recrute" : "Je représente une école"}")`);
   await p.fill("#f-prenoms", prenoms); await p.fill("#f-nom", nom); await p.fill("#f-tel", "07 07 07 07 07");
@@ -63,7 +81,24 @@ async function creerOrg(p, nom, ville, secteur) {
   await C.click('button:has-text("Envoyer à l\'école")'); await pause(C, 1200);
   ok((await texte(C)).includes("En attente de l'école"), "candidat : diplôme déclaré, en attente");
   await photo(C, "candidat-espace");
-  await C.click('button:has-text("Postuler")'); await pause(C, 1300);
+  /* Le CV : import d'un fichier Word, puis adaptation à l'offre */
+  await C.click('#nav button:has-text("Mon CV")'); await pause(C, 1000);
+  ok((await texte(C)).includes("Mon profil & CV"), "candidat : page « Mon CV »");
+  await C.setInputFiles("#cv-fichier", { name: "cv-henri.docx", mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", buffer: docx(CV_TEST) }); await pause(C, 1200);
+  const lu = await C.textContent(".modal");
+  ok(lu.includes("Votre CV a été lu") && /Expériences\s*2/.test(lu) && /Cursus scolaire\s*2/.test(lu) && /Compétences\s*5/.test(lu), "candidat : CV Word lu (2 expériences, 2 diplômes, 5 compétences)");
+  await C.click('.modal button:has-text("Remplir mon CV")'); await pause(C, 1500);
+  const ap = await C.textContent("#cv-apercu");
+  ok(ap.includes("Foxtrot International") && ap.includes("Master Génie pétrolier et gazier") && ap.includes("HYSYS"), "candidat : CV rempli et affiché dans le modèle");
+  await C.click('.cv-modeles button:has-text("Moderne")'); await pause(C, 500);
+  ok(await C.isVisible("#cv-apercu .cvt-moderne"), "candidat : changement de modèle de CV");
+  await C.click('.cv-barre ~ * button:has-text("Enregistrer"), header button:has-text("Enregistrer"), .chemise button:has-text("Enregistrer")'); await pause(C, 900);
+  await photo(C, "candidat-cv");
+  await C.click('#nav button:has-text("Mon espace")'); await pause(C, 1200);
+  await C.click('button:has-text("Adapter mon CV")'); await pause(C, 1500);
+  ok((await texte(C)).includes("Correspondance avec l'offre") && (await C.textContent("#cv-apercu")).includes("Ingénieur procédés gaz junior"), "candidat : CV adapté à l'offre (titre, correspondance)");
+  await photo(C, "candidat-adapter");
+  await C.click("#btn-postuler-cv"); await pause(C, 1300);
   ok((await texte(C)).includes("Avant de commencer"), "candidat : consentement à l'entretien demandé");
   await C.check("#ok"); await C.click('button:has-text("Commencer")'); await pause(C, 1000);
   const reps = ["J'ai suivi un master en génie pétrolier et gazier à l'INP-HB, avec un stage chez un opérateur gazier où j'ai modélisé le pouvoir calorifique du gaz livré.",
@@ -90,6 +125,10 @@ async function creerOrg(p, nom, ville, secteur) {
   await photo(R, "entreprise-candidatures");
   await R.click('button:has-text("Détail")'); await pause(R, 500);
   await photo(R, "entreprise-detail");
+  await R.click('.modal button:has-text("Voir le CV")'); await pause(R, 600);
+  ok((await R.textContent(".modal")).includes("Foxtrot International") && (await R.textContent(".modal")).includes("Ingénieur procédés gaz junior"), "entreprise : voit le CV adapté joint à la candidature");
+  await photo(R, "entreprise-cv");
+  await R.click('.modal button:has-text("Retour")'); await pause(R, 400);
   await R.click('.modal button:has-text("Retenir et passer en RH")'); await R.selectOption("#e-contrat", "CDD");
   const fin = new Date(Date.now() + 30 * 864e5).toISOString().slice(0, 10);
   await R.fill("#e-fin", fin); await R.fill("#e-serv", "Production");

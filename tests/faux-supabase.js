@@ -83,7 +83,7 @@ function ordre(o) {
 
 const SRF = [];
 const VOID = [];
-const TABLES = ["organisations", "organisations_codes", "profils", "diplomes", "offres", "candidatures", "employes", "conges"];
+const TABLES = ["organisations", "organisations_codes", "profils", "diplomes", "offres", "candidatures", "employes", "conges", "cv"];
 
 function session(uid, email) {
   const a = "acc-" + crypto.randomBytes(8).toString("hex"), r = "ref-" + crypto.randomBytes(8).toString("hex");
@@ -133,7 +133,7 @@ async function traiter(meth, url, corps, entetes) {
   let sql;
   const m = /^\/rest\/v1\/rpc\/([a-z_]+)$/.exec(chemin);
   if (m) {
-    const args = Object.entries(corps || {}).map(([k, v]) => k + " => " + (typeof v === "boolean" ? String(v) : lit(v))).join(", ");
+    const args = Object.entries(corps || {}).map(([k, v]) => k + " => " + (typeof v === "boolean" ? String(v) : v === null ? "null" : typeof v === "object" ? lit(JSON.stringify(v)) : lit(v))).join(", ");
     if (SRF.includes(m[1])) sql = "select coalesce(json_agg(t), '[]') from " + m[1] + "(" + args + ") t";
     else if (VOID.includes(m[1])) sql = "select " + m[1] + "(" + args + ") \\g /dev/null\nselect ''";
     else sql = "select to_json(" + m[1] + "(" + args + "))";
