@@ -31,7 +31,9 @@ insert into t select 'ecole', (creer_organisation('INP-HB','Yamoussoukro'))->>'i
 select pg_temp.en('00000000-0000-0000-0000-0000000000c1');
 insert into diplomes (ecole_id,intitule,filiere,annee) select v::uuid,'Master Génie pétrolier','Génie pétrolier',2025 from t where k='ecole';
 select 'offres visibles par le candidat: ' || count(*) from offres;
-insert into t select 'cand', (postuler((select v::uuid from t where k='offre')))->>'id';
+select 'cv enregistré: ' || (enregistrer_cv('{"titre":"Ingénieure procédés","competences":["HYSYS","HSE"]}'::jsonb,'moderne','vert')->>'ok');
+select 'cv mis à jour: ' || (enregistrer_cv('{"titre":"Ingénieure procédés junior"}'::jsonb,'inconnu','rose')->>'ok') || ' / modèle ' || (select modele || ' ' || couleur from cv);
+insert into t select 'cand', (postuler((select v::uuid from t where k='offre'), '{"titre":"CV adapté à l''offre"}'::jsonb))->>'id';
 do $$ begin perform postuler((select v::uuid from t where k='offre')); raise exception 'ÉCHEC double candidature acceptée'; exception when sqlstate 'P0001' then null; end $$;
 do $$ begin perform entretien_repondre((select v::uuid from t where k='cand'),'Une réponse assez longue'); raise exception 'ÉCHEC réponse sans consentement'; exception when sqlstate 'P0001' then null; end $$;
 select entretien_consentir((select v::uuid from t where k='cand'));
@@ -43,13 +45,18 @@ select 'statut après entretien: ' || statut || ' / scores ' || scores::text fro
 select pg_temp.en('00000000-0000-0000-0000-0000000000c2');
 select 'candidat 2 voit candidatures des autres: ' || count(*) from candidatures;
 select 'candidat 2 voit profils: ' || count(*) from profils;
+select 'candidat 2 voit CV des autres: ' || count(*) from cv;
+do $$ begin insert into cv (user_id, contenu) values ('00000000-0000-0000-0000-0000000000c1','{}'); raise exception 'ÉCHEC écriture directe dans cv'; exception when insufficient_privilege then null; end $$;
 -- Rival company
 select pg_temp.en('00000000-0000-0000-0000-0000000000d1');
 select 'entreprise rivale voit candidatures: ' || count(*) from candidatures;
+select 'entreprise rivale voit CV: ' || count(*) from cv;
+do $$ begin perform enregistrer_cv('{}'::jsonb); raise exception 'ÉCHEC une entreprise a créé un CV'; exception when sqlstate 'P0001' then null; end $$;
 do $$ begin perform basculer_shortlist((select v::uuid from t where k='cand')); raise exception 'ÉCHEC rival a modifié la short-list'; exception when sqlstate 'P0001' then null; end $$;
 -- Recruiter
 select pg_temp.en('00000000-0000-0000-0000-0000000000a2');
 select 'recruteur voit candidature + profil + diplôme: ' || (select count(*) from candidatures) || '/' || (select count(*) from profils where type='candidat') || '/' || (select count(*) from diplomes);
+select 'recruteur voit CV + CV joint: ' || (select count(*) from cv) || '/' || (select cv->>'titre' from candidatures);
 select basculer_shortlist((select v::uuid from t where k='cand'));
 select 'short-list validée: ' || (valider_shortlist((select v::uuid from t where k='offre'))->>'nombre');
 select embaucher((select v::uuid from t where k='cand'),'Ingénieur procédés junior','CDD','2027-12-31','Exploitation') is not null;
