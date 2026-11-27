@@ -1,0 +1,122 @@
+/* Excellent HR — éditeur de CV, 4 modèles, impression PDF, adaptation à une offre */
+.cv-barre{display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:var(--papier,#fff);border:1px solid var(--trait,#ddd);padding:10px 16px;margin:-8px 0 18px;font-size:14px}
+.cv-barre svg{vertical-align:-4px;color:var(--terre,#5B9E2E)}
+.cv-etat{font-family:var(--machine,monospace);font-size:12px;color:var(--tampon-vert,#3F7A1E)}
+.cv-etat.sale{color:var(--tampon-ocre,#A26A12)}
+.cv-page{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:20px;align-items:start}
+.cv-edit>.card{margin-bottom:16px}
+.cv-cote{position:sticky;top:84px}
+@media(max-width:1100px){.cv-page{grid-template-columns:minmax(0,1fr)}.cv-cote{position:static}}
+.cv-champs{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px}
+.cv-champs .large{grid-column:1/-1}
+.cv-champs label,.cv-edit label{margin-bottom:3px}
+.cv-entree{display:flex;gap:10px;padding:14px 0 12px;border-top:1px dashed var(--trait,#ddd)}
+.cv-entree:first-of-type{border-top:0}
+.cv-entree .cv-champs{flex:1;min-width:0}
+.cv-actions{display:flex;flex-direction:column;gap:6px}
+.cv-edit textarea{width:100%;resize:vertical;font:inherit}
+@media(max-width:600px){.cv-champs{grid-template-columns:1fr}.cv-entree{flex-direction:column}.cv-actions{flex-direction:row;justify-content:flex-end}}
+.cv-puces{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.cv-puces .chip{display:inline-flex;align-items:center;gap:4px;padding:4px 8px;font-size:13px}
+.cv-puces .chip button{border:0;background:none;cursor:pointer;font-size:15px;line-height:1;color:inherit;opacity:.6;padding:0 2px}
+.cv-puces .chip button:hover{opacity:1}
+.cv-puces input{flex:1;min-width:200px;border:0!important;border-bottom:1.5px solid var(--encre-2,#555)!important;background:transparent!important}
+.cv-puces .chip.ok{background:#EAF4DD;border-color:#B9D98F;color:#2F5424}
+.cv-puces button.chip.manque{border:1.5px dashed var(--tampon-ocre,#A26A12);background:#FFF8E8;color:#7A4E0C;cursor:pointer;font:inherit;font-size:13px}
+.cv-puces button.chip.manque:hover{background:#FCEFCB}
+.cv-modeles{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px}
+.cv-modeles button{display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 4px;border:1.5px solid var(--trait,#ddd);background:var(--papier,#fff);cursor:pointer;font-family:var(--machine,monospace);font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--encre,#222);border-radius:3px}
+.cv-modeles button.on{border-color:var(--encre,#222);box-shadow:2px 2px 0 var(--kraft,#B9D98F)}
+.mini{width:38px;height:50px;border:1px solid #ccc;background:#fff;display:block}
+.mini-classique{background:linear-gradient(#555 0 0) 50% 6px/60% 3px no-repeat,linear-gradient(#5B9E2E 0 0) 50% 13px/80% 1.5px no-repeat,repeating-linear-gradient(#fff 0 5px,#ddd 5px 6.5px) 50% 18px/80% 28px no-repeat,#fff}
+.mini-moderne{background:linear-gradient(90deg,#3F7A1E 0 34%,transparent 34%),repeating-linear-gradient(#fff 0 5px,#ddd 5px 6.5px) 85% 6px/52% 38px no-repeat,#fff}
+.mini-bambou{background:linear-gradient(#DDEBC8 0 0) 0 0/100% 12px no-repeat,linear-gradient(#5B9E2E 0 0) 4px 17px/40% 4px no-repeat,repeating-linear-gradient(#fff 0 5px,#ddd 5px 6.5px) 50% 24px/82% 22px no-repeat,#fff}
+.mini-compact{background:linear-gradient(#3F7A1E 0 0) 0 10px/100% 2px no-repeat,linear-gradient(#eee 0 0) 92% 15px/32% 30px no-repeat,repeating-linear-gradient(#fff 0 4px,#ddd 4px 5.5px) 8% 15px/52% 30px no-repeat,#fff}
+.cv-couleurs{display:flex;gap:8px;margin:0 0 12px}
+.cv-couleurs button{width:24px;height:24px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px #bbb;cursor:pointer}
+.cv-couleurs button.on{box-shadow:0 0 0 2px var(--encre,#222)}
+.cv-apercu{position:relative;overflow:hidden;background:#E9ECE4;border:1px solid var(--trait,#ddd)}
+.cv-apercu .cvdoc{transform-origin:0 0;position:absolute;top:0;left:0}
+.modal.large{max-width:880px;width:calc(100vw - 32px)}
+.offre-act{display:flex;flex-direction:column;gap:6px;align-items:stretch}
+@media(max-width:600px){.offre-act{flex-direction:row;flex-wrap:wrap}}
+.adapt-jauge{display:flex;align-items:center;justify-content:center;gap:18px;margin:4px 0 6px}
+.adapt-jauge>div{display:flex;flex-direction:column;align-items:center;gap:2px}
+.adapt-jauge svg{width:110px;height:110px}
+.adapt-jauge .fleche{font-size:28px;color:var(--terre,#5B9E2E)}
+.adapt-exp{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px dashed var(--trait,#ddd);text-transform:none;letter-spacing:0;font-family:inherit;font-size:14px;color:var(--encre,#222);cursor:pointer}
+.adapt-exp:first-of-type{border-top:0}
+.etoiles{color:#E0A23B;white-space:nowrap}
+.etoiles svg{fill:#E0A23B}
+
+/* ---------- La feuille de CV (format A4 : 794 × 1123 px) ---------- */
+.cvdoc{width:794px;min-height:1123px;background:#fff;color:#22261F;box-shadow:0 2px 14px rgba(0,0,0,.12);font-family:"Work Sans","Segoe UI",Arial,sans-serif;font-size:13px;line-height:1.45;padding:50px 54px;box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact;text-align:left;letter-spacing:0;text-transform:none}
+.cvdoc *{box-sizing:border-box}
+.cvdoc h1{font-family:"Fraunces",Georgia,serif;font-weight:600;font-size:30px;margin:0;line-height:1.1;color:#1A1D17;background:none;padding:0;display:block}
+.cvdoc h1::before,.cvdoc h4::before{content:none!important}
+.cvdoc .titre{font-size:15px;font-weight:600;color:var(--cv);margin-top:6px}
+.cvdoc .ct{font-size:12px;color:#555;margin-top:8px}
+.cvdoc .ct i{font-style:normal;margin:0 8px;color:#aaa}
+.cvdoc section{margin-top:18px;break-inside:avoid-page}
+.cvdoc h4{font-family:inherit;font-size:12.5px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--cv);margin:0 0 8px;padding:0 0 4px;border-bottom:1.5px solid var(--cv)}
+.cvdoc .ent{margin-bottom:10px;break-inside:avoid}
+.cvdoc .l1{display:flex;justify-content:space-between;gap:12px;align-items:baseline}
+.cvdoc .l1 b{font-size:13.5px;color:#1A1D17}
+.cvdoc .dt{font-size:12px;color:#666;white-space:nowrap}
+.cvdoc .l2{color:#444;font-style:italic}
+.cvdoc .l3{color:#555;font-size:12px}
+.cvdoc ul{margin:4px 0 0;padding-left:18px}
+.cvdoc li{margin:1px 0}
+.cvdoc .resume{margin:0;color:#333}
+.cvdoc p{margin:0}
+.cvdoc .tags span{display:inline-block;border:1px solid color-mix(in srgb,var(--cv) 35%,#fff);border-radius:3px;padding:2px 8px;margin:0 5px 5px 0;font-size:12px}
+.cvdoc .lg{margin-bottom:3px}.cvdoc .lg span{color:#666}
+.cvdoc .fort{background:color-mix(in srgb,var(--cv) 16%,#fff)}
+.cvdoc .tags span.fort{border-color:var(--cv);font-weight:600}
+.cvdoc .cols2{display:grid;grid-template-columns:1.4fr 1fr;gap:26px}
+.cvdoc .cv-vide{color:#9a9a9a;text-align:center;margin-top:120px;font-size:15px}
+/* Classique */
+.cvt-classique header{text-align:center;padding-bottom:6px}
+.cvt-classique h1{text-transform:uppercase;letter-spacing:.08em;font-size:28px}
+/* Moderne */
+.cvt-moderne{display:grid;grid-template-columns:262px 1fr;padding:0}
+.cvt-moderne aside{background:var(--cv);color:#fff;padding:44px 26px}
+.cvt-moderne aside h1{color:#fff;font-size:26px}
+.cvt-moderne aside .titre{color:#fff;opacity:.9}
+.cvt-moderne aside .ct{color:#fff;opacity:.9;margin-top:14px;display:grid;gap:4px;word-break:break-word}
+.cvt-moderne aside h4{color:#fff;border-color:rgba(255,255,255,.5)}
+.cvt-moderne aside .tags span{border-color:rgba(255,255,255,.45);color:#fff}
+.cvt-moderne aside .tags span.fort{background:#fff;color:var(--cv)}
+.cvt-moderne aside .lg span{color:rgba(255,255,255,.8)}
+.cvt-moderne main{padding:44px 36px}
+.cvt-moderne main h4{border:0;border-left:4px solid var(--cv);padding:0 0 0 8px}
+.cvt-moderne .cv-vide{grid-column:1/-1}
+/* Bambou */
+.cvt-bambou{padding:0 0 40px}
+.cvt-bambou header{background:color-mix(in srgb,var(--cv) 14%,#fff);border-left:10px solid var(--cv);padding:34px 48px 26px}
+.cvt-bambou>section,.cvt-bambou>.cols2,.cvt-bambou>.cv-vide{margin-left:48px;margin-right:48px}
+.cvt-bambou h4{display:inline-block;background:var(--cv);color:#fff;border:0;font-family:"Courier Prime","Courier New",monospace;letter-spacing:.08em;padding:4px 14px 3px;border-radius:4px 4px 0 0;margin:0}
+.cvt-bambou section{border-top:2px solid var(--cv);padding-top:0}
+.cvt-bambou section>h4{transform:translateY(-100%);margin-bottom:-14px}
+.cvt-bambou section{margin-top:34px}
+.cvt-bambou .dt{font-family:"Courier Prime","Courier New",monospace;color:var(--cv)}
+.cvt-bambou .ent{padding-top:8px}
+/* Compact */
+.cvt-compact{padding:36px 40px;font-size:12px}
+.cvt-compact header{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;border-bottom:3px solid var(--cv);padding-bottom:10px;margin-bottom:12px}
+.cvt-compact header .ct{text-align:right;margin:0}
+.cvt-compact h1{font-size:26px}
+.cvt-compact .cols{display:grid;grid-template-columns:1.75fr 1fr;gap:22px}
+.cvt-compact .cols aside{background:color-mix(in srgb,var(--cv) 7%,#fff);padding:4px 14px 14px}
+.cvt-compact section{margin-top:12px}
+.cvt-compact h4{font-size:11.5px;border-bottom-width:1px}
+
+/* ---------- Impression : seule la feuille de CV sort ---------- */
+#zone-impression{display:none}
+@media print{
+  @page{size:A4;margin:0}
+  body.imprime-cv{background:#fff!important;background-image:none!important}
+  body.imprime-cv>*:not(#zone-impression){display:none!important}
+  body.imprime-cv #zone-impression{display:block!important}
+  #zone-impression .cvdoc{transform:none!important;box-shadow:none;width:210mm;min-height:297mm}
+}

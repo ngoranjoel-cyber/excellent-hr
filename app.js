@@ -105,14 +105,14 @@ document.addEventListener("click", (e) => { if (!e.target.closest(".menu-act")) 
 function pages() {
   if (!ME) return [["accueil", "Accueil", "maison"], ["connexion", "Se connecter", "connexion"]];
   const t = ME.profil.type, l = [];
-  if (t === "candidat") l.push(["candidat", "Mon espace", "maison"], ["entretien", "Entretien IA", "entretien"]);
+  if (t === "candidat") l.push(["candidat", "Mon espace", "maison"], ["cv", "Mon CV", "cv"], ["entretien", "Entretien IA", "entretien"]);
   if (t === "entreprise") l.push(...(ME.org ? [["tableau", "Tableau de bord", "tdb"], ["offres", "Offres", "offres"], ["recruteur", "Candidatures", "candidats"], ["rh", "Personnel", "personnel"]] : [["organisation", "Mon entreprise", "orga"]]));
   if (t === "ecole") l.push(ME.org ? ["ecole", "Insertion", "ecole"] : ["organisation", "Mon école", "orga"]);
   if (ME.employes.length) l.push(["employe", "Mes congés", "conges"]);
   l.push(["profil", "Profil", "profil"]);
   return l;
 }
-const CACHEES = { fiche: "rh" }; /* pages sans bouton : la page parente reste allumée */
+const CACHEES = { fiche: "rh", adapter: "candidat" }; /* pages sans bouton : la page parente reste allumée */
 function pageDepart() { return pages()[0][0]; }
 let page = "accueil", rendu = 0, recherche = "";
 function go(p) { page = p; try { history.replaceState(null, "", "#" + p); } catch (e) { } render(); window.scrollTo(0, 0); }
@@ -144,7 +144,7 @@ async function render() {
     if (e.code === "session") { ME = null; html = await VIEWS.connexion(); page = "connexion"; }
     else html = `<div class="alert red"><b>Impossible d'afficher cette page.</b><div class="small">${esc(e.message)}</div><button class="btn sm" style="margin-top:10px" onclick="render()">Réessayer</button></div>`;
   }
-  if (n === rendu) $("#app").innerHTML = html;
+  if (n === rendu) { $("#app").innerHTML = html; if (typeof apresRendu === "function") apresRendu(); }
 }
 
 /* ============ Écrans ============ */
@@ -245,7 +245,7 @@ function motDePasseOublie() {
 /* ---- Profil ---- */
 VIEWS.profil = async () => {
   const p = ME.profil, cand = p.type === "candidat";
-  return `<h1>Mon profil</h1><p class="sub">${esc(TYPES[p.type])} · ${esc(ME.email || "")}</p>
+  return `<div class="entete"><div><h1>Mon profil</h1><p class="sub">${esc(TYPES[p.type])} · ${esc(ME.email || "")}</p></div>${cand ? `<button class="btn" onclick="go('cv')">${ico("cv", 16)} Cursus, formations, expériences : Mon CV</button>` : ""}</div>
 <div class="grid g2">
  <div class="card"><h3>Mes informations</h3>
   <div class="grid" style="grid-template-columns:1fr 1fr;gap:10px">
@@ -318,7 +318,7 @@ const STATUTS = { "Entretien IA à passer": "p-gold", "Entretien IA passé": "p-
 /* Compatibilité estimée (simple, transparente) : ville et mots communs entre la formation et l'offre. */
 function compat(o) {
   const p = ME.profil, mots = (t) => new Set(String(t).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").split(/[^a-z0-9]+/).filter((m) => m.length > 3));
-  const f = mots(p.formation + " " + (CAND?.diplomes || []).map((d) => d.intitule + " " + d.filiere).join(" ")), t = mots(o.titre + " " + o.secteur + " " + o.description);
+  const f = mots(p.formation + " " + (CAND?.diplomes || []).map((d) => d.intitule + " " + d.filiere).join(" ") + " " + (CVD ? texteCV(CVD) : "")), t = mots(o.titre + " " + o.secteur + " " + o.description);
   let s = 50, communs = 0; f.forEach((m) => { if (t.has(m)) communs++; });
   if (p.ville && o.ville && p.ville.toLowerCase() === o.ville.toLowerCase()) s += 15;
   return Math.min(98, s + Math.min(33, communs * 11));
@@ -336,6 +336,7 @@ async function chargerCandidat() {
   const orgIds = [...new Set(toutes.map((o) => o.org_id))];
   const orgs = orgIds.length ? await SB.lire("organisations", "id=" + inListe(orgIds)) : [];
   CAND = { diplomes, candidatures, offres, toutes, ecoles, orgs: Object.fromEntries(orgs.map((o) => [o.id, o])) };
+  await chargerCV();
   void ids;
 }
 const nomOrg = (id) => CAND?.orgs[id]?.nom || "Entreprise";
@@ -343,7 +344,7 @@ VIEWS.candidat = async () => {
   await chargerCandidat();
   const p = ME.profil, verifie = CAND.diplomes.some((d) => d.statut === "valide");
   const champs = [p.prenoms, p.nom, p.telephone, p.ville, p.formation, CAND.diplomes.length ? "x" : ""];
-  const compl = Math.round(champs.filter(Boolean).length / champs.length * 100);
+  const compl = Math.round((champs.filter(Boolean).length / champs.length * 100 + cvCompletude(CVD)) / 2), ccv = cvCompletude(CVD);
   const aFaire = CAND.candidatures.filter((x) => x.statut === "Entretien IA à passer");
   const presel = CAND.candidatures.filter((x) => ["Présélectionné(e)", "Retenu(e)"].includes(x.statut)).length;
   const villes = [...new Set(CAND.offres.map((o) => o.ville).filter(Boolean))];
@@ -371,6 +372,11 @@ ${aFaire.map((c) => { const o = CAND.toutes.find((x) => x.id === c.offre_id) || 
    <div class="bar-h" style="margin-top:14px"><i style="width:${compl}%"></i></div>
    <div class="small muted" style="margin-top:6px">Profil complété à ${compl} %${compl < 100 ? ` · <a href="#" onclick="go('profil');return false">compléter</a>` : ""}</div>
   </div>
+  <div class="card" style="margin-top:14px"><div class="row" style="margin-bottom:6px"><h3 class="sp" style="margin:0">Mon CV</h3><span class="small muted">${ccv} %</span></div>
+   <div class="bar-h vert"><i style="width:${ccv}%"></i></div>
+   <p class="small muted" style="margin:8px 0 10px">${ccv < 60 ? "Cursus, formations, expériences, compétences : complétez votre CV, ou importez-le en PDF / Word." : `${CVD.experiences.length} expérience(s) · ${CVD.cursus.length} diplôme(s) · ${CVD.competences.length} compétence(s). Adaptez-le à chaque offre avant de postuler.`}</p>
+   <div class="row"><button class="btn sm" onclick="go('cv')">${ico("cv", 15)} ${ccv < 60 ? "Compléter mon CV" : "Voir mon CV"}</button><button class="btn ghost sm" onclick="go('cv');setTimeout(()=>$('#cv-fichier')&&$('#cv-fichier').click(),400)">${ico("importer", 15)} Importer</button></div>
+  </div>
   <div class="card" style="margin-top:14px"><div class="row" style="margin-bottom:6px"><h3 class="sp" style="margin:0">Mes diplômes</h3><button class="btn sm ghost" onclick="ajouterDiplome()">+ Déclarer</button></div>
    ${CAND.diplomes.length ? CAND.diplomes.map((d) => `<div class="ligne"><span class="sq ${d.statut === "valide" ? "v" : d.statut === "refuse" ? "r" : "k"}"></span><div class="sp"><b>${esc(d.intitule)}</b><div class="small muted">${esc((CAND.ecoles.find((e) => e.id === d.ecole_id) || {}).nom || "")}${d.annee ? " · " + d.annee : ""}</div></div><span class="pill ${d.statut === "valide" ? "p-green" : d.statut === "refuse" ? "p-red" : "p-gray"}">${d.statut === "valide" ? "✔ Vérifié" : d.statut === "refuse" ? "Non reconnu" : "En attente de l'école"}</span>${d.statut !== "valide" ? `<button class="ico-btn" onclick="retirerDiplome('${d.id}',this)" title="Retirer">${ico("croix", 15)}</button>` : ""}</div>`).join("") : '<p class="small muted">Déclarez votre diplôme : votre école le vérifiera et vous obtiendrez le badge « Diplôme vérifié ».</p>'}
   </div>
@@ -384,7 +390,7 @@ function listeOffres() {
   const deja = new Set(CAND.candidatures.map((x) => x.offre_id));
   const l = CAND.offres.filter((o) => (!filtre.type || o.type === filtre.type) && (!filtre.ville || o.ville === filtre.ville) && (!filtre.q || (o.titre + nomOrg(o.org_id) + o.secteur).toLowerCase().includes(filtre.q.toLowerCase())))
     .map((o) => ({ o, c: compat(o) })).sort((a, b) => b.c - a.c);
-  return l.length ? l.map(({ o, c }) => `<div class="candidat">${carre(c)}<div class="qui"><b>${esc(o.titre)}</b><span class="small muted">${esc(nomOrg(o.org_id))} · ${esc(o.ville)} · ${o.type}${o.limite ? " · jusqu'au " + fr(o.limite) : ""}</span>${o.description ? `<div class="small" style="margin-top:3px">${esc(o.description.slice(0, 130))}${o.description.length > 130 ? "…" : ""}</div>` : ""}</div>${deja.has(o.id) ? '<span class="pill p-gray">Déjà postulé</span>' : `<button class="btn bleu sm" onclick="postuler('${o.id}',this)">Postuler</button>`}</div>`).join("") : '<div class="vide">Aucune offre ne correspond pour le moment.</div>';
+  return l.length ? l.map(({ o, c }) => `<div class="candidat">${carre(c)}<div class="qui"><b>${esc(o.titre)}</b><span class="small muted">${esc(nomOrg(o.org_id))} · ${esc(o.ville)} · ${o.type}${o.limite ? " · jusqu'au " + fr(o.limite) : ""}</span>${o.description ? `<div class="small" style="margin-top:3px">${esc(o.description.slice(0, 130))}${o.description.length > 130 ? "…" : ""}</div>` : ""}</div>${deja.has(o.id) ? '<span class="pill p-gray">Déjà postulé</span>' : `<div class="offre-act"><button class="btn bleu sm" onclick="adapterCV('${o.id}')">${ico("cv", 15)} Adapter mon CV</button><button class="btn ghost sm" onclick="postulerAvecCV('${o.id}',this)">Postuler</button></div>`}</div>`).join("") : '<div class="vide">Aucune offre ne correspond pour le moment.</div>';
 }
 function majOffres() { $("#offres").innerHTML = listeOffres(); }
 async function postuler(id, b) {
@@ -632,7 +638,7 @@ function detail(id) {
   <p class="small muted" style="margin-top:8px">${esc(c.resume || "")}</p>
   <h3 style="margin-top:16px">Réponses à l'entretien</h3>
   ${Q.map((q, i) => { const r = c.reponses[i] || {}; return `<p class="small" style="margin:10px 0 2px"><b>${i + 1}. ${esc(q.q)}</b></p><p class="small">${esc(r.r1 || "—")}</p><p class="small muted" style="margin:4px 0 2px"><i>${esc(q.relance)}</i></p><p class="small">${esc(r.r2 || "—")}</p>`; }).join("")}
-  <div class="row" style="margin-top:14px">${c.statut !== "Non retenu(e)" && !emb ? `<button class="btn ghost sm" onclick="refuser('${c.id}',this)">Ne pas retenir</button>` : ""}<span class="sp"></span><button class="btn ghost" onclick="closeModal()">Fermer</button>
+  <div class="row" style="margin-top:14px">${c.statut !== "Non retenu(e)" && !emb ? `<button class="btn ghost sm" onclick="refuser('${c.id}',this)">Ne pas retenir</button>` : ""}${c.cv ? `<button class="btn ghost sm" onclick="voirCVJoint('${c.id}')">${ico("cv", 15)} Voir le CV</button>` : ""}<span class="sp"></span><button class="btn ghost" onclick="closeModal()">Fermer</button>
   <button class="btn" ${emb ? "disabled" : ""} onclick="formEmbauche('${c.id}')">${emb ? "Déjà dans le personnel" : "Retenir et passer en RH"}</button></div>`);
 }
 async function refuser(id, b) { await occupe(b, SB.rpc("refuser_candidature", { p_cand: id }), "Candidature marquée « Non retenu(e) »"); closeModal(); render(); }
@@ -709,7 +715,7 @@ VIEWS.fiche = async () => {
   conges.forEach((c) => evts.push({ d: c.du, c: c.statut === "Validé" ? "b" : c.statut === "Refusé" ? "r" : "o", t: `Congé ${c.statut.toLowerCase()} : ${fr(c.du)} → ${fr(c.au)}` }));
   if (e.fin) evts.push({ d: e.fin, c: "n", t: "Fin de contrat" });
   const ans = [...new Set(evts.map((x) => String(x.d).slice(0, 4)))].sort();
-  const coul = { v: "#3DB05A", b: "#5A6B9A", r: "var(--red)", o: "#F08A3A", n: "var(--nuit)" };
+  const coul = { v: "#3F7A1E", b: "#8CC63F", r: "var(--red)", o: "#E0A23B", n: "var(--nuit)" };
   const pris = conges.filter((c) => c.statut === "Validé").reduce((a, c) => a + c.jours, 0);
   const attente = conges.filter((c) => c.statut === "En attente").reduce((a, c) => a + c.jours, 0);
   const panneau = (cl, titre, resume, contenu, idp) => `<details class="accordeon" id="${idp}"><summary><span class="sq ${cl}"></span><span class="t"><b>${titre}</b><span>${resume}</span></span>${ico("bas", 18)}</summary><div class="contenu">${contenu}</div></details>`;

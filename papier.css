@@ -9,7 +9,7 @@
   --encre:#22401B;         /* encre bleu-noir */
   --encre-2:#3E5A33;
   --trait:#D3DCC3;         /* filets d'impression */
-  --tampon-vert:#3F7A1E; --tampon-rouge:#B23A2E; --tampon-bleu:#27498C; --tampon-ocre:#A26A12;
+  --tampon-vert:#3F7A1E; --tampon-rouge:#B23A2E; --tampon-bleu:#2F5424; --tampon-ocre:#A26A12;
   --machine:"Courier New","Courier Prime","Courier 10 Pitch",Courier,monospace;
   --titre:Georgia,"Times New Roman","DejaVu Serif",serif;
   --nuit:var(--encre); --ink:var(--encre); --muted:#5F6B55; --line:var(--trait);
