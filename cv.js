@@ -1,7 +1,8 @@
 /* Excellent HR — CV du candidat
-   - profil structuré : profil, cursus scolaire, formations, expériences, compétences, langues, centres d'intérêt
-   - import d'un CV PDF / Word / texte, lu dans le navigateur (le fichier ne quitte pas l'appareil)
-   - 4 modèles de CV, téléchargement en PDF par l'impression du navigateur
+   - profil structuré : photo, profil, cursus scolaire, formations, expériences, domaines clés, informatique, langues,
+     projets, références, centres d'intérêt
+   - import d'un CV PDF / Word / texte, lu dans le navigateur (le fichier ne quitte pas l'appareil), photo comprise
+   - 6 modèles de CV (dont « Signature » et « Épuré », calqués sur de vrais CV), téléchargement en PDF
    - adaptation du CV à une offre (mots-clés, accroche, ordre des compétences), puis candidature avec ce CV
    Le moteur est « par mots-clés » ; la fonction adapterAvecIA() est l'emplacement prévu pour brancher une IA. */
 
@@ -9,26 +10,48 @@ IC.cv = '<path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4"/><circle cx="11" cy="10
 IC.importer = '<path d="M12 4v11"/><path d="M7 10l5 5 5-5"/><path d="M5 20h14"/>';
 IC.etoile = '<path d="M12 4l2.4 5 5.4.6-4 3.7 1.1 5.3L12 16l-4.9 2.6 1.1-5.3-4-3.7 5.4-.6z"/>';
 IC.baguette = '<path d="M5 19L16 8"/><path d="M15 4v2M19 8h2M18 5l1.5-1.5M13 6l1 1"/>';
+IC.photo = '<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>';
 
-const CV_VIDE = () => ({ titre: "", resume: "", contact: { email: "", telephone: "", ville: "", lien: "" }, cursus: [], formations: [], experiences: [], competences: [], langues: [], interets: [] });
-const CV_COULEURS = { vert: "#3F7A1E", nuit: "#1F2A44", bordeaux: "#7A2335", ardoise: "#3D4B57", terre: "#9A4E2F" };
-const CV_MODELES = { classique: ["Classique", "Sobre et lisible, idéal pour les grandes entreprises"], moderne: ["Moderne", "Colonne de couleur à gauche"], bambou: ["Bambou", "Style dossier Excellent HR"], compact: ["Compact", "Tout tient sur une page"] };
-const RUBRIQUES = {
-  cursus: { titre: "Cursus scolaire", vide: "Ajoutez vos diplômes, du plus récent au plus ancien (Master, Licence, BTS, Baccalauréat…).", champs: [["diplome", "Diplôme", "Master Génie pétrolier", 1], ["etablissement", "Établissement", "INP-HB"], ["ville", "Ville", "Yamoussoukro"], ["debut", "Début", "2021"], ["fin", "Fin", "2024"], ["mention", "Mention / détails", "Mention Bien · major de promotion", 1]] },
-  formations: { titre: "Formations et certifications", vide: "Formations courtes, certifications, habilitations (HSE, informatique, langues…).", champs: [["intitule", "Intitulé", "Habilitation électrique B1V", 1], ["organisme", "Organisme", "APAVE"], ["annee", "Année", "2025"]] },
-  experiences: { titre: "Expériences professionnelles", vide: "Emplois, stages, missions, bénévolat : tout ce qui montre ce que vous savez faire.", champs: [["poste", "Poste", "Ingénieur procédés stagiaire", 1], ["entreprise", "Entreprise", "Foxtrot International"], ["lieu", "Lieu", "Abidjan"], ["debut", "Début", "Mars 2024"], ["fin", "Fin", "Août 2024"], ["missions", "Missions et résultats (une par ligne)", "Suivi des installations de traitement du gaz\nModèle prédictif du pouvoir calorifique : écart réduit de 15 %", 2]] },
-  langues: { titre: "Langues", vide: "Français, anglais… avec votre niveau.", champs: [["langue", "Langue", "Anglais"], ["niveau", "Niveau", "Courant (B2)"]] },
+const CV_VIDE = () => ({ titre: "", resume: "", photo: "", contact: { email: "", telephone: "", ville: "", lien: "", extra: "" }, cursus: [], formations: [], experiences: [], competences: [], informatique: [], langues: [], projets: [], references: [], interets: [] });
+const CV_COULEURS = { marine: "#24477F", vert: "#3F7A1E", nuit: "#1F2A44", bordeaux: "#7A2335", ardoise: "#3D4B57", terre: "#9A4E2F" };
+const CV_MODELES = {
+  signature: ["Signature", "Barre latérale, photo, rubriques en bandeaux"],
+  epure: ["Épuré", "Une colonne, lisible par les logiciels de recrutement (ATS)"],
+  classique: ["Classique", "Sobre et lisible, idéal pour les grandes entreprises"],
+  moderne: ["Moderne", "Colonne de couleur à gauche"],
+  bambou: ["Bambou", "Style dossier Excellent HR"],
+  compact: ["Compact", "Tout tient sur une page"],
 };
-let CVD = null, CVM = { modele: "classique", couleur: "vert" }, cvSale = false, cvMinuteur = null, IMPORT = null, ADAPT = null;
+const CV_FORMES = { rond: "Rond à anneau", galet: "Galet", feuille: "Feuille", arche: "Arche", hexagone: "Hexagone", goutte: "Goutte" };
+/* La base n'accepte que ces valeurs dans ses colonnes : le vrai choix (modèle, couleur, forme) voyage dans le contenu. */
+const CV_BASE = { modeles: ["classique", "moderne", "bambou", "compact"], couleurs: ["vert", "nuit", "bordeaux", "ardoise", "terre"] };
+const RUBRIQUES = {
+  cursus: { titre: "Cursus scolaire", vide: "Ajoutez vos diplômes, du plus récent au plus ancien (Master, Licence, BTS, Baccalauréat…).", champs: [["diplome", "Diplôme", "Diplôme d'Ingénieur Pétrole & Énergie", 1], ["etablissement", "Établissement", "INP-HB"], ["ville", "Ville", "Yamoussoukro / Côte d'Ivoire"], ["debut", "Début", "2021"], ["fin", "Fin", "2024"], ["mention", "Mention / détails", "Mention Bien · major de promotion", 1]] },
+  formations: { titre: "Formations et certifications", vide: "Formations courtes, certifications, habilitations (HSE, informatique, langues…).", champs: [["intitule", "Intitulé", "Habilitation électrique B1V", 1], ["organisme", "Organisme", "APAVE"], ["annee", "Année", "2025"]] },
+  experiences: { titre: "Expériences professionnelles", vide: "Emplois, stages, missions, bénévolat : tout ce qui montre ce que vous savez faire.", champs: [["poste", "Poste", "Superviseur QHSE", 1], ["entreprise", "Entreprise", "ORWASTE – Groupe ORTEC"], ["lieu", "Lieu", "Abidjan"], ["debut", "Début", "Août 2026"], ["fin", "Fin", "Présent"], ["type", "Type (facultatif)", "Stage, CDD, mission…"], ["missions", "Missions et résultats (une par ligne)", "Mise en œuvre des procédures QHSE sur les sites\nConformité ISO 9001, 14001, 45001", 2]] },
+  informatique: { titre: "Informatique et logiciels", vide: "Les logiciels que vous maîtrisez, avec leur usage (Aspen HYSYS – simulation de procédés…).", champs: [["logiciel", "Logiciel", "Aspen HYSYS"], ["detail", "Usage", "Simulation de procédés"]] },
+  langues: { titre: "Langues", vide: "Français, anglais… avec votre niveau.", champs: [["langue", "Langue", "Anglais"], ["niveau", "Niveau", "Professionnel"]] },
+  projets: { titre: "Projets et réalisations", vide: "Travaux marquants : modèle, étude, mise en service, projet de fin d'études…", champs: [["titre", "Projet", "Modèle prédictif du PCS du gaz livré à la centrale d'Azito IV", 1], ["date", "Date", "Sept. 2024"]] },
+  references: { titre: "Références", vide: "Personnes qui peuvent parler de votre travail (avec leur accord).", champs: [["nom", "Nom", "Armel KAUDJHIS"], ["poste", "Fonction, entreprise", "Superviseur Onshore, Foxtrot International"], ["telephone", "Téléphone", "+225 07 09 81 02 86"], ["email", "E-mail", "nom@entreprise.com"]] },
+};
+const LISTES = ["cursus", "formations", "experiences", "informatique", "langues", "projets", "references"];
+let CVD = null, CVM = { modele: "classique", couleur: "vert", forme: "rond" }, cvSale = false, cvMinuteur = null, IMPORT = null, ADAPT = null;
 
 /* ---------- Outils ---------- */
 const nrm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 const copie = (o) => JSON.parse(JSON.stringify(o));
+const maj1 = (s) => String(s || "").replace(/^./, (x) => x.toUpperCase());
+function miseDe(m) {
+  m = Object.assign({}, m || {});
+  return { modele: CV_MODELES[m.modele] ? m.modele : "classique", couleur: CV_COULEURS[m.couleur] ? m.couleur : "vert", forme: CV_FORMES[m.forme] ? m.forme : "rond" };
+}
 function cvNormaliser(c) {
   const v = CV_VIDE(), r = Object.assign(v, c || {});
   r.contact = Object.assign(CV_VIDE().contact, (c && c.contact) || {});
-  ["cursus", "formations", "experiences", "langues"].forEach((k) => { r[k] = Array.isArray(r[k]) ? r[k].filter((e) => e && typeof e === "object") : []; });
+  LISTES.forEach((k) => { r[k] = Array.isArray(r[k]) ? r[k].filter((e) => e && typeof e === "object") : []; });
   ["competences", "interets"].forEach((k) => { r[k] = Array.isArray(r[k]) ? r[k].map(String).filter(Boolean) : []; });
+  r.photo = typeof r.photo === "string" && r.photo.startsWith("data:image/") ? r.photo : "";
+  delete r.mise;
   return r;
 }
 function cvCompletude(c) {
@@ -42,9 +65,9 @@ async function chargerCV() {
   try { [r] = await SB.lire("cv", "user_id=eq." + ME.id); CV_INDISPO = false; }
   catch (e) { if (e.code === "session") throw e; CV_INDISPO = true; }
   const p = ME.profil;
-  if (r) { CVD = cvNormaliser(r.contenu); CVM = { modele: r.modele, couleur: r.couleur }; }
+  if (r) { CVM = miseDe((r.contenu && r.contenu.mise) || { modele: r.modele, couleur: r.couleur }); CVD = cvNormaliser(r.contenu); }
   else {
-    CVD = CV_VIDE(); CVM = { modele: "classique", couleur: "vert" };
+    CVD = CV_VIDE(); CVM = miseDe({ modele: "signature", couleur: "marine" });
     CVD.titre = p.formation || ""; CVD.contact.ville = p.ville || ""; CVD.contact.telephone = p.telephone || ""; CVD.contact.email = ME.email || "";
   }
   cvSale = false;
@@ -52,7 +75,8 @@ async function chargerCV() {
 }
 async function enregistrerCV(b, silencieux) {
   if (CV_INDISPO) return modal(`<h2>Mise à jour de la base à faire</h2><p>Pour enregistrer les CV, l'administrateur doit lancer une fois le fichier <code>supabase/mise-a-jour-cv.sql</code> dans Supabase (SQL Editor).</p><div class="row"><span class="sp"></span><button class="btn" onclick="closeModal()">Compris</button></div>`);
-  await occupe(b, SB.rpc("enregistrer_cv", { p_contenu: CVD, p_modele: CVM.modele, p_couleur: CVM.couleur }), silencieux ? undefined : "CV enregistré");
+  const contenu = Object.assign({}, CVD, { mise: CVM });
+  await occupe(b, SB.rpc("enregistrer_cv", { p_contenu: contenu, p_modele: CV_BASE.modeles.includes(CVM.modele) ? CVM.modele : "classique", p_couleur: CV_BASE.couleurs.includes(CVM.couleur) ? CVM.couleur : "nuit" }), silencieux ? undefined : "CV enregistré");
   cvSale = false; majEtatCV();
 }
 function majEtatCV() {
@@ -101,16 +125,56 @@ function ajouterPuce(e, k, inp) {
   if (e) e.preventDefault();
   const v = inp.value.split(/[,;]/).map((x) => x.trim()).filter((x) => x.length > 1);
   if (!v.length) return;
-  v.forEach((x) => { if (!CVD[k].some((y) => nrm(y) === nrm(x))) CVD[k].push(x.slice(0, 60)); });
+  v.forEach((x) => { if (!CVD[k].some((y) => nrm(y) === nrm(x))) CVD[k].push(x.slice(0, 80)); });
   inp.value = ""; const z = $("#puces-" + k); z.outerHTML = puces(k, inp.placeholder); $("#puces-" + k + " input").focus(); cvModifie();
 }
 function retirerPuce(k, i) { CVD[k].splice(i, 1); const z = $("#puces-" + k), ph = z.querySelector("input").placeholder; z.outerHTML = puces(k, ph); cvModifie(); }
 function choixModele(fn) {
-  return `<div class="cv-modeles">${Object.entries(CV_MODELES).map(([k, [n, d]]) => `<button class="${CVM.modele === k ? "on" : ""}" onclick="${fn || "choisirModele"}('${k}')" title="${esc(d)}"><span class="mini mini-${k}"></span>${n}</button>`).join("")}</div>
-  <div class="cv-couleurs">${Object.entries(CV_COULEURS).map(([k, c]) => `<button class="${CVM.couleur === k ? "on" : ""}" style="background:${c}" title="Couleur ${k}" aria-label="Couleur ${k}" onclick="${fn ? "choisirCouleurA" : "choisirCouleur"}('${k}')"></button>`).join("")}</div>`;
+  const a = fn ? "A" : "";
+  return `<div class="cv-modeles">${Object.entries(CV_MODELES).map(([k, [n, d]]) => `<button class="${CVM.modele === k ? "on" : ""}" onclick="choisirModele${a}('${k}')" title="${esc(d)}"><span class="mini mini-${k}"></span>${n}</button>`).join("")}</div>
+  <div class="cv-couleurs">${Object.entries(CV_COULEURS).map(([k, c]) => `<button class="${CVM.couleur === k ? "on" : ""}" style="background:${c}" title="Couleur ${k}" aria-label="Couleur ${k}" onclick="choisirCouleur${a}('${k}')"></button>`).join("")}</div>`;
 }
 function choisirModele(m) { CVM.modele = m; $("#cv-choix").innerHTML = choixModele(); cvModifie(); majApercu(); }
 function choisirCouleur(c) { CVM.couleur = c; $("#cv-choix").innerHTML = choixModele(); cvModifie(); majApercu(); }
+
+/* ---------- Photo de profil ---------- */
+function cadrePhoto(src, forme, taille, coul) {
+  return `<span class="phw f-${esc(forme || "rond")}" style="--ph:${taille || 120}px${coul ? ";--cv:" + coul : ""}"><span class="ph">${src ? `<img src="${src}" alt="">` : `<i class="ph-vide">${ico("photo", Math.round((taille || 120) / 3))}</i>`}</span></span>`;
+}
+function blocPhoto() {
+  return `<div class="cv-photo" id="cv-photo">
+   <div class="cv-photo-cadre">${cadrePhoto(CVD.photo, CVM.forme, 112, CV_COULEURS[CVM.couleur])}</div>
+   <div class="cv-photo-op">
+    <div class="row" style="gap:8px;flex-wrap:wrap"><label class="btn sm" style="cursor:pointer">${ico("photo", 15)} ${CVD.photo ? "Changer la photo" : "Ajouter une photo"}<input type="file" id="cv-photo-fichier" accept="image/*" hidden onchange="choisirPhoto(this)"></label>${CVD.photo ? `<button class="btn sm ghost" onclick="retirerPhoto()">Retirer</button>` : ""}</div>
+    <div class="small muted" style="margin:8px 0 6px">Forme de la photo</div>
+    <div class="cv-formes">${Object.entries(CV_FORMES).map(([k, n]) => `<button class="${CVM.forme === k ? "on" : ""}" onclick="choisirForme('${k}')" title="${n}" aria-label="${n}">${cadrePhoto(CVD.photo, k, 34, CV_COULEURS[CVM.couleur])}</button>`).join("")}</div>
+    <div class="small muted" style="margin-top:6px">Photo nette, de face, fond uni. Le modèle « Épuré » (ATS) n'affiche pas de photo.</div>
+   </div></div>`;
+}
+function majPhoto() { const z = $("#cv-photo"); if (z) z.outerHTML = blocPhoto(); cvModifie(); }
+function choisirForme(f) { CVM.forme = f; majPhoto(); }
+function retirerPhoto() { CVD.photo = ""; majPhoto(); }
+/* Recadre au carré (un peu vers le haut pour garder le visage) et réduit : la photo reste légère (~30 ko). */
+function photoCarree(source, w, h) {
+  const cote = Math.min(w, h), x = (w - cote) / 2, y = h > w ? (h - cote) * 0.18 : 0;
+  const c = document.createElement("canvas"); let t = 360, q = 0.86, url;
+  do {
+    c.width = c.height = t; const g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, t, t);
+    g.drawImage(source, x, y, cote, cote, 0, 0, t, t); url = c.toDataURL("image/jpeg", q); t = Math.round(t * 0.85); q -= 0.06;
+  } while (url.length > 60000 && t > 150);
+  return url;
+}
+async function choisirPhoto(inp) {
+  const f = inp.files[0]; inp.value = ""; if (!f) return;
+  if (!/^image\//.test(f.type)) return toast("Choisissez une image (JPG, PNG…).");
+  if (f.size > 12e6) return toast("Image trop lourde (12 Mo maximum).");
+  try {
+    const url = URL.createObjectURL(f), img = new Image();
+    await new Promise((ok, ko) => { img.onload = ok; img.onerror = ko; img.src = url; });
+    CVD.photo = photoCarree(img, img.naturalWidth, img.naturalHeight); URL.revokeObjectURL(url);
+    majPhoto(); toast("Photo ajoutée : pensez à enregistrer.");
+  } catch (e) { toast("Cette image n'a pas pu être lue."); }
+}
 
 VIEWS.cv = async () => {
   await chargerCV();
@@ -121,20 +185,25 @@ ${CV_INDISPO ? '<div class="alert gold" style="margin-bottom:14px"><b>Base de do
 <div class="cv-page">
  <div class="cv-edit">
   <div class="card"><h3>Profil</h3>
-   <label>Titre du CV</label><input type="text" value="${esc(c.titre)}" oninput="cvSet('titre',this.value)" placeholder="Ingénieur procédés — Génie pétrolier et gazier">
+   ${blocPhoto()}
+   <label>Titre du CV</label><input type="text" value="${esc(c.titre)}" oninput="cvSet('titre',this.value)" placeholder="Ingénieur Pétrole & Énergie · QHSE">
    <label style="margin-top:10px">Résumé / accroche</label><textarea rows="4" oninput="cvSet('resume',this.value)" placeholder="En deux ou trois phrases : qui vous êtes, ce que vous savez faire, ce que vous cherchez.">${esc(c.resume)}</textarea>
    <div class="cv-champs" style="margin-top:10px">
     <div><label>E-mail</label><input type="email" value="${esc(c.contact.email)}" oninput="cvSetC('email',this.value)" placeholder="nom@exemple.com"></div>
     <div><label>Téléphone</label><input type="tel" value="${esc(c.contact.telephone)}" oninput="cvSetC('telephone',this.value)" placeholder="+225 07 00 00 00 00"></div>
-    <div><label>Ville</label><input type="text" value="${esc(c.contact.ville)}" oninput="cvSetC('ville',this.value)" placeholder="Abidjan"></div>
+    <div><label>Adresse / ville</label><input type="text" value="${esc(c.contact.ville)}" oninput="cvSetC('ville',this.value)" placeholder="Marcory, Abidjan – CIV"></div>
     <div><label>Lien (LinkedIn, portfolio)</label><input type="text" value="${esc(c.contact.lien)}" oninput="cvSetC('lien',this.value)" placeholder="linkedin.com/in/…"></div>
+    <div class="large"><label>Ligne de présentation (sous la photo)</label><input type="text" value="${esc(c.contact.extra)}" oninput="cvSetC('extra',this.value)" placeholder="Ingénieur INP-HB (2024)"></div>
    </div>
   </div>
+  ${rubriqueListe("experiences")}
   ${rubriqueListe("cursus")}
   ${rubriqueListe("formations")}
-  ${rubriqueListe("experiences")}
-  <div class="card"><h3>Compétences</h3>${puces("competences", "Tapez une compétence puis Entrée : HYSYS, HSE, Excel…")}</div>
+  <div class="card"><h3>Domaines clés et compétences</h3>${puces("competences", "Tapez une compétence puis Entrée : traitement du gaz, QHSE…")}</div>
+  ${rubriqueListe("informatique")}
   ${rubriqueListe("langues")}
+  ${rubriqueListe("projets")}
+  ${rubriqueListe("references")}
   <div class="card"><h3>Centres d'intérêt</h3>${puces("interets", "Lecture, football, bénévolat…")}</div>
  </div>
  <aside class="cv-cote">
@@ -147,38 +216,101 @@ ${CV_INDISPO ? '<div class="alert gold" style="margin-bottom:14px"><b>Base de do
 };
 
 /* ---------- Modèles de CV ---------- */
-function cvDates(e) { return [e.debut, e.fin].filter(Boolean).map(esc).join(" – ") || esc(e.annee || ""); }
+const AN_DE = (s) => (String(s || "").match(/(?:19|20)\d{2}/) || [""])[0];
+function cvDates(e) {
+  const d = e.debut || "", f = e.fin || "";
+  if (!d && !f) return esc(e.annee || "");
+  /* « Fév. 2026 – Juin 2026 » s'écrit « Fév. – Juin 2026 » */
+  const ad = AN_DE(d), af = AN_DE(f), dm = d.replace(/\s*(?:19|20)\d{2}/, "").trim();
+  if (ad && ad === af && dm) return esc(dm) + " – " + esc(f);
+  return [d, f].filter(Boolean).map(esc).join(" – ");
+}
 function cvMissions(t, mots) {
-  const l = String(t || "").split(/\n+/).map((x) => x.replace(/^[•\-–*▪●]\s*/, "").trim()).filter(Boolean);
+  const l = String(t || "").split(/\n+/).map((x) => x.replace(/^[•\-–*▪●▸]\s*/, "").trim()).filter(Boolean);
   return l.length ? `<ul>${l.map((x) => `<li${mots && contientMot(x, mots) ? ' class="fort"' : ""}>${esc(x)}</li>`).join("")}</ul>` : "";
 }
 function contientMot(texte, mots) { const t = racines(texte); for (const m of mots) if (t.has(m)) return true; return false; }
+const CODES_LANGUE = { francais: "FR", anglais: "EN", espagnol: "ES", allemand: "DE", arabe: "AR", portugais: "PT", italien: "IT", chinois: "ZH", mandarin: "ZH", russe: "RU", japonais: "JA", neerlandais: "NL", turc: "TR" };
+const codeLangue = (l) => CODES_LANGUE[nrm(l).replace(/[^a-z]/g, "")] || nrm(l).replace(/[^a-z]/g, "").slice(0, 2).toUpperCase();
+const estStage = (e) => /stage/i.test(e.type || "");
 function rendreCV(c, m, nom, opts) {
-  c = cvNormaliser(c); m = m || CVM; opts = opts || {};
-  const coul = CV_COULEURS[m.couleur] || CV_COULEURS.vert, mots = opts.mots || null;
+  c = cvNormaliser(c); m = miseDe(m || CVM); opts = opts || {};
+  const coul = CV_COULEURS[m.couleur], mots = opts.mots || null, fort = (x) => (mots && contientMot(x, mots) ? ' class="fort"' : "");
+  if (m.modele === "signature" || m.modele === "epure") return `<div class="cvdoc cvt-${m.modele}" style="--cv:${coul}">${(m.modele === "signature" ? rendreSignature : rendreEpure)(c, m, nom, fort, mots)}</div>`;
   const contact = [c.contact.email, c.contact.telephone, c.contact.ville, c.contact.lien].filter(Boolean).map(esc);
   const sec = (titre, corps) => corps ? `<section><h4>${titre}</h4>${corps}</section>` : "";
-  const exp = c.experiences.filter((e) => e.poste || e.entreprise).map((e) => `<div class="ent"><div class="l1"><b>${esc(e.poste || "")}</b><span class="dt">${cvDates(e)}</span></div><div class="l2">${esc([e.entreprise, e.lieu].filter(Boolean).join(" · "))}</div>${cvMissions(e.missions, mots)}</div>`).join("");
+  const exp = c.experiences.filter((e) => e.poste || e.entreprise).map((e) => `<div class="ent"><div class="l1"><b>${esc(e.poste || "")}</b><span class="dt">${cvDates(e)}</span></div><div class="l2">${esc([e.entreprise, e.lieu, e.type].filter(Boolean).join(" · "))}</div>${cvMissions(e.missions, mots)}</div>`).join("");
   const cur = c.cursus.filter((e) => e.diplome || e.etablissement).map((e) => `<div class="ent"><div class="l1"><b>${esc(e.diplome || "")}</b><span class="dt">${cvDates(e)}</span></div><div class="l2">${esc([e.etablissement, e.ville].filter(Boolean).join(" · "))}</div>${e.mention ? `<div class="l3">${esc(e.mention)}</div>` : ""}</div>`).join("");
   const frm = c.formations.filter((e) => e.intitule).map((e) => `<div class="ent"><div class="l1"><b>${esc(e.intitule)}</b><span class="dt">${esc(e.annee || "")}</span></div>${e.organisme ? `<div class="l2">${esc(e.organisme)}</div>` : ""}</div>`).join("");
-  const comp = c.competences.length ? `<div class="tags">${c.competences.map((x) => `<span${mots && contientMot(x, mots) ? ' class="fort"' : ""}>${esc(x)}</span>`).join("")}</div>` : "";
+  const comp = c.competences.length ? `<div class="tags">${c.competences.map((x) => `<span${fort(x)}>${esc(x)}</span>`).join("")}</div>` : "";
+  const info = c.informatique.filter((e) => e.logiciel).map((e) => `<div class="lg"><b${fort(e.logiciel)}>${esc(e.logiciel)}</b>${e.detail ? ` <span>— ${esc(e.detail)}</span>` : ""}</div>`).join("");
   const lang = c.langues.filter((e) => e.langue).map((e) => `<div class="lg"><b>${esc(e.langue)}</b>${e.niveau ? ` <span>${esc(e.niveau)}</span>` : ""}</div>`).join("");
+  const proj = c.projets.filter((e) => e.titre).map((e) => `<li${fort(e.titre)}>${esc(e.titre)}${e.date ? ` <span class="dt">— ${esc(e.date)}</span>` : ""}</li>`).join("");
+  const refs = c.references.filter((e) => e.nom).map((e) => `<div class="ref"><b>${esc(e.nom)}</b>${e.poste ? `<div>${esc(e.poste)}</div>` : ""}<div class="dt">${[e.telephone, e.email].filter(Boolean).map(esc).join(" · ")}</div></div>`).join("");
   const int = c.interets.length ? `<p>${c.interets.map(esc).join(" · ")}</p>` : "";
   const res = c.resume ? `<p class="resume">${esc(c.resume).replace(/\n/g, "<br>")}</p>` : "";
+  const ph = (t) => (c.photo ? cadrePhoto(c.photo, m.forme, t) : "");
   const tete = `<h1>${esc(nom || "Prénom NOM")}</h1>${c.titre ? `<div class="titre">${esc(c.titre)}</div>` : ""}`;
   let corps;
   if (m.modele === "moderne") {
-    corps = `<aside>${tete}<div class="ct">${contact.map((x) => `<div>${x}</div>`).join("")}</div>${sec("Compétences", comp)}${sec("Langues", lang)}${sec("Centres d'intérêt", int)}</aside>
-    <main>${sec("Profil", res)}${sec("Expériences professionnelles", exp)}${sec("Cursus scolaire", cur)}${sec("Formations et certifications", frm)}</main>`;
+    corps = `<aside>${c.photo ? `<div class="ph-haut">${ph(150)}</div>` : ""}${tete}<div class="ct">${contact.map((x) => `<div>${x}</div>`).join("")}</div>${sec("Compétences", comp)}${sec("Informatique", info)}${sec("Langues", lang)}${sec("Références", refs)}${sec("Centres d'intérêt", int)}</aside>
+    <main>${sec("Profil", res)}${sec("Expériences professionnelles", exp)}${sec("Cursus scolaire", cur)}${sec("Formations et certifications", frm)}${sec("Projets et réalisations", proj && `<ul>${proj}</ul>`)}</main>`;
   } else if (m.modele === "compact") {
-    corps = `<header><div>${tete}</div><div class="ct">${contact.map((x) => `<div>${x}</div>`).join("")}</div></header>${res}
-    <div class="cols"><main>${sec("Expériences", exp)}${sec("Cursus scolaire", cur)}</main><aside>${sec("Compétences", comp)}${sec("Formations", frm)}${sec("Langues", lang)}${sec("Intérêts", int)}</aside></div>`;
+    corps = `<header>${ph(86)}<div class="sp">${tete}</div><div class="ct">${contact.map((x) => `<div>${x}</div>`).join("")}</div></header>${res}
+    <div class="cols"><main>${sec("Expériences", exp)}${sec("Cursus scolaire", cur)}${sec("Projets", proj && `<ul>${proj}</ul>`)}</main><aside>${sec("Compétences", comp)}${sec("Informatique", info)}${sec("Formations", frm)}${sec("Langues", lang)}${sec("Références", refs)}${sec("Intérêts", int)}</aside></div>`;
   } else {
-    corps = `<header>${tete}<div class="ct">${contact.join('<i aria-hidden="true">·</i>')}</div></header>${sec(m.modele === "bambou" ? "Profil" : "Profil", res)}${sec("Expériences professionnelles", exp)}${sec("Cursus scolaire", cur)}${sec("Formations et certifications", frm)}
-    <div class="cols2">${sec("Compétences", comp)}${sec("Langues", lang)}</div>${sec("Centres d'intérêt", int)}`;
+    corps = `<header>${m.modele === "bambou" ? `<div class="bh"><div>${tete}<div class="ct">${contact.join('<i aria-hidden="true">·</i>')}</div></div>${ph(118)}</div>` : `${c.photo ? `<div class="ph-haut">${ph(112)}</div>` : ""}${tete}<div class="ct">${contact.join('<i aria-hidden="true">·</i>')}</div>`}</header>${sec("Profil", res)}${sec("Expériences professionnelles", exp)}${sec("Cursus scolaire", cur)}${sec("Formations et certifications", frm)}${sec("Projets et réalisations", proj && `<ul>${proj}</ul>`)}
+    <div class="cols2">${sec("Compétences", comp)}${sec("Langues", lang)}</div><div class="cols2">${sec("Informatique", info)}${sec("Références", refs)}</div>${sec("Centres d'intérêt", int)}`;
   }
   const vide = !exp && !cur && !res && !comp;
   return `<div class="cvdoc cvt-${esc(m.modele)}" style="--cv:${coul}">${corps}${vide ? '<p class="cv-vide">Remplissez les rubriques à gauche : votre CV apparaît ici.</p>' : ""}</div>`;
+}
+/* « Signature » : barre latérale claire (photo, contact, domaines clés, langues, informatique, références), contenu à droite */
+function rendreSignature(c, m, nom, fort, mots) {
+  const mots_nom = String(nom || "Prénom NOM").trim().split(/\s+/);
+  const bande = (t, corps) => corps ? `<section class="sb"><h4><span>${t}</span></h4>${corps}</section>` : "";
+  const titre = (t, corps) => corps ? `<section><h4>${t}</h4>${corps}</section>` : "";
+  const ct = [c.contact.extra, c.contact.ville, c.contact.email && `<span class="lien">${esc(c.contact.email)}</span>`, c.contact.telephone, c.contact.lien && `<span class="lien">${esc(c.contact.lien)}</span>`]
+    .filter(Boolean).map((x) => `<li>${x.startsWith("<span") ? x : esc(x)}</li>`).join("");
+  const exp = c.experiences.filter((e) => e.poste || e.entreprise).map((e) => {
+    const d = cvDates(e), lieu = esc(e.lieu || "");
+    return `<div class="ent"><div class="l1"><b>${esc(e.poste || "")}</b>${e.entreprise ? `<span class="ent-org"> · ${esc(e.entreprise)}</span>` : ""}</div>
+    <div class="l2">${[d, lieu].filter(Boolean).join(" · ")}${estStage(e) ? ' <span class="stage">(Stage)</span>' : e.type ? ` <span class="stage">(${esc(e.type)})</span>` : ""}</div>${cvMissions(e.missions, mots)}</div>`;
+  }).join("");
+  const cur = c.cursus.filter((e) => e.diplome || e.etablissement).map((e) => `<div class="frm"><b>${cvDates(e) ? cvDates(e) + " : " : ""}${esc(e.diplome || "")}</b>${e.etablissement || e.ville ? `<div class="et"><span>${esc(e.etablissement || "")}</span>${e.ville ? ` <i>· ${esc(e.ville)}</i>` : ""}</div>` : ""}${e.mention ? `<div class="et m">${esc(e.mention)}</div>` : ""}</div>`).join("");
+  const frm = c.formations.filter((e) => e.intitule).map((e) => `<div class="frm"><b>${e.annee ? esc(e.annee) + " : " : ""}${esc(e.intitule)}</b>${e.organisme ? `<div class="et"><span>${esc(e.organisme)}</span></div>` : ""}</div>`).join("");
+  const proj = c.projets.filter((e) => e.titre).map((e) => `<li${fort(e.titre)}>${esc(e.titre)}${e.date ? ` – <i>${esc(e.date)}</i>` : ""}</li>`).join("");
+  const comp = c.competences.length ? `<ul class="pts">${c.competences.map((x) => `<li${fort(x)}>${esc(x)}</li>`).join("")}</ul>` : "";
+  const lang = c.langues.filter((e) => e.langue).map((e) => `<div class="lgs"><span class="code">${esc(codeLangue(e.langue))}</span><b>${esc(e.langue)}</b><span>${esc(e.niveau || "")}</span></div>`).join("");
+  const info = c.informatique.filter((e) => e.logiciel).map((e) => `<div class="inf"><span class="pastille">${esc(e.logiciel.trim()[0] || "")}</span><b${fort(e.logiciel)}>${esc(e.logiciel)}</b>${e.detail ? ` <span>– ${esc(e.detail)}</span>` : ""}</div>`).join("");
+  const refs = c.references.filter((e) => e.nom).map((e) => `<div class="ref"><b>${esc(e.nom)}</b>${e.poste ? `<div>${esc(e.poste)}</div>` : ""}${e.telephone ? `<div class="tel">${esc(e.telephone)}</div>` : ""}${e.email ? `<div>${esc(e.email)}</div>` : ""}</div>`).join("");
+  const int = c.interets.length ? `<ul class="pts">${c.interets.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>` : "";
+  const vide = !exp && !cur && !c.resume && !comp;
+  return `<aside><div class="ph-zone">${cadrePhoto(c.photo, m.forme, 146)}</div>${ct ? `<ul class="ct">${ct}</ul>` : ""}
+   ${bande("Domaines clés", comp)}${bande("Langues", lang)}${bande("Informatique", info)}${bande("Références", refs && `<div class="refs">${refs}</div>`)}${bande("Centres d'intérêt", int)}</aside>
+  <main><header><h1><span>${esc(mots_nom[0])}</span> ${esc(mots_nom.slice(1).join(" "))}</h1>${c.titre ? `<div class="titre">${esc(c.titre)}</div>` : ""}</header>
+   ${c.resume ? `<section class="profil"><h4>Profil</h4><p class="resume">${esc(c.resume).replace(/\n/g, "<br>")}</p></section>` : ""}
+   ${titre("Expériences professionnelles", exp)}${titre("Formation", cur)}${titre("Formations et certifications", frm)}${titre("Projets &amp; réalisations", proj && `<ul class="fl">${proj}</ul>`)}
+   ${vide ? '<p class="cv-vide">Remplissez les rubriques à gauche : votre CV apparaît ici.</p>' : ""}</main>`;
+}
+/* « Épuré » : une seule colonne, titres soulignés, dates à droite — pensé pour les logiciels de recrutement (ATS) */
+function rendreEpure(c, m, nom, fort, mots) {
+  const sec = (t, corps) => corps ? `<section><h4>${t}</h4>${corps}</section>` : "";
+  const ct = [c.contact.telephone, c.contact.email, c.contact.ville, c.contact.lien].filter(Boolean).map(esc).join('<i aria-hidden="true">|</i>');
+  const exp = c.experiences.filter((e) => e.poste || e.entreprise).map((e) => `<div class="ent"><div class="l1"><span><b>${esc(e.poste || "")}${estStage(e) && !/stagiaire|intern/i.test(e.poste || "") ? " (Stage)" : ""}</b>${e.entreprise || e.lieu ? ` - <i>${esc([e.entreprise, e.lieu].filter(Boolean).join(" / "))}</i>` : ""}</span><span class="dt">${cvDates(e)}</span></div>${cvMissions(e.missions, mots)}</div>`).join("");
+  const cur = c.cursus.filter((e) => e.diplome || e.etablissement).map((e) => `<div class="ent"><div class="l1"><b>${esc(e.diplome || "")}</b><span class="dt">${[e.debut, e.fin].filter(Boolean).map(esc).join(" - ")}</span></div>${e.etablissement || e.ville ? `<div>${esc([e.etablissement, e.ville].filter(Boolean).join(", "))}</div>` : ""}${e.mention ? `<div class="l3">${esc(e.mention)}</div>` : ""}</div>`).join("");
+  const frm = c.formations.filter((e) => e.intitule).map((e) => `<div class="ent"><div class="l1"><b>${esc(e.intitule)}</b><span class="dt">${esc(e.annee || "")}</span></div>${e.organisme ? `<div>${esc(e.organisme)}</div>` : ""}</div>`).join("");
+  const proj = c.projets.filter((e) => e.titre).map((e) => `<li${fort(e.titre)}>${esc(e.titre)}${e.date ? `, ${esc(e.date)}.` : ""}</li>`).join("");
+  const ligne = (lab, v) => v ? `<div class="lab"><b>${lab} :</b> ${v}</div>` : "";
+  const info = c.informatique.filter((e) => e.logiciel).map((e) => `<span${fort(e.logiciel)}>${esc(e.logiciel)}${e.detail ? ` (${esc(e.detail)})` : ""}</span>`).join(", ");
+  const comp = c.competences.map((x) => `<span${fort(x)}>${esc(x)}</span>`).join(", ");
+  const lang = c.langues.filter((e) => e.langue).map((e) => esc(e.langue) + (e.niveau ? " " + esc(nrm(e.niveau) === e.niveau ? e.niveau : e.niveau.toLowerCase()) : "")).join(", ");
+  const comps = ligne("Compétences informatiques", info) + ligne("Domaines", comp) + ligne("Langues", lang) + ligne("Centres d'intérêt", c.interets.map(esc).join(", "));
+  const refs = c.references.filter((e) => e.nom).map((e) => `<div class="lab"><b>${esc(e.nom)}</b>${[e.poste, e.telephone, e.email].some(Boolean) ? " : " + [e.poste, e.telephone, e.email].filter(Boolean).map(esc).join('<i aria-hidden="true">|</i>') : ""}</div>`).join("");
+  const vide = !exp && !cur && !c.resume && !comp;
+  return `<header><h1>${esc(nom || "Prénom NOM")}</h1>${c.titre ? `<div class="titre">${esc(c.titre)}</div>` : ""}${ct ? `<div class="ct">${ct}</div>` : ""}</header>
+  ${sec("Profil", c.resume && `<p class="resume">${esc(c.resume).replace(/\n/g, "<br>")}</p>`)}${sec("Expériences professionnelles", exp)}${sec("Formation", cur)}${sec("Formations et certifications", frm)}${sec("Projets &amp; réalisations", proj && `<ul>${proj}</ul>`)}${sec("Compétences &amp; intérêts", comps)}${sec("Références", refs)}
+  ${vide ? '<p class="cv-vide">Remplissez les rubriques à gauche : votre CV apparaît ici.</p>' : ""}`;
 }
 function imprimerCV(html) {
   let z = $("#zone-impression");
@@ -192,33 +324,102 @@ function imprimerCV(html) {
 
 /* ---------- Lecture des fichiers ---------- */
 const PDFJS = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/";
+const COL = "⟦colonne⟧"; /* marque le passage à la colonne suivante d'un CV à barre latérale */
 function chargerScript(src) {
   return new Promise((ok, ko) => { const s = document.createElement("script"); s.src = src; s.onload = ok; s.onerror = () => ko(new Error("Le lecteur de PDF n'a pas pu être chargé. Vérifiez votre connexion internet, ou importez la version Word (.docx).")); document.head.appendChild(s); });
 }
-async function textePDF(f) {
-  if (!window.pdfjsLib) { await chargerScript(PDFJS + "pdf.min.js"); window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS + "pdf.worker.min.js"; }
-  const doc = await window.pdfjsLib.getDocument({ data: new Uint8Array(await f.arrayBuffer()) }).promise;
-  const lignes = [];
-  for (let p = 1; p <= Math.min(doc.numPages, 6); p++) {
-    const page = await doc.getPage(p), larg = page.getViewport({ scale: 1 }).width, tc = await page.getTextContent();
-    const items = tc.items.filter((i) => i.str && i.str.trim()).map((i) => ({ s: i.str, x: i.transform[4], y: Math.round(i.transform[5]), w: i.width || 0 }));
-    /* CV sur deux colonnes : on lit la colonne de gauche puis celle de droite si un grand vide vertical les sépare */
-    const col = colonnePDF(items, larg);
-    const groupes = col ? [items.filter((i) => i.x < col), items.filter((i) => i.x >= col)] : [items];
-    for (const g of groupes) {
-      g.sort((a, b) => b.y - a.y || a.x - b.x); let cur = null;
-      for (const it of g) { if (!cur || Math.abs(cur.y - it.y) > 3) { cur = { y: it.y, p: [] }; lignes.push(cur); } cur.p.push(it); }
-      lignes.push({ y: 0, p: [] });
-    }
+async function chargerPDFJS() {
+  if (!window.pdfjsLib) {
+    await chargerScript(PDFJS + "pdf.min.js");
+    for (let i = 0; i < 100 && !window.pdfjsLib; i++) await new Promise((r) => setTimeout(r, 50));
+    if (!window.pdfjsLib) throw new Error("Le lecteur de PDF n'a pas pu être chargé.");
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS + "pdf.worker.min.js";
   }
-  return lignes.map((l) => l.p.sort((a, b) => a.x - b.x).map((p) => p.s).join(" ").replace(/\s+/g, " ").trim()).join("\n");
+  return window.pdfjsLib;
 }
+async function lirePDF(f) {
+  const lib = await chargerPDFJS();
+  const doc = await lib.getDocument({ data: new Uint8Array(await f.arrayBuffer()) }).promise, pages = [];
+  for (let p = 1; p <= Math.min(doc.numPages, 6); p++) {
+    const page = await doc.getPage(p), tc = await page.getTextContent();
+    pages.push({ larg: page.getViewport({ scale: 1 }).width, items: itemsPDF(tc.items) });
+  }
+  let photo = null; try { photo = await photoPDF(doc, lib); } catch (e) { photo = null; }
+  return { texte: textePages(pages), photo, colonnes: pages.some((p) => colonnePDF(p.items, p.larg) > 0) };
+}
+const itemsPDF = (items) => items.filter((i) => i.str && i.str.trim()).map((i) => ({ s: i.str, x: i.transform[4], y: i.transform[5], w: i.width || 0, t: Math.hypot(i.transform[0], i.transform[1]) || i.height || 10 }));
+function textePages(pages) {
+  const out = [];
+  pages.forEach((pg) => {
+    const col = colonnePDF(pg.items, pg.larg);
+    const groupes = col ? [pg.items.filter((i) => i.x < col), pg.items.filter((i) => i.x >= col)] : [pg.items];
+    groupes.forEach((g, k) => { if (k) out.push(COL); out.push(...lignesItems(g)); });
+  });
+  return out.join("\n");
+}
+/* Recolle les morceaux d'une même ligne. Word et les navigateurs coupent les mots (« O » + « perations »,
+   ligatures « ffi », « fi ») : un vrai espace se voit à l'écart entre deux morceaux, pas à leur nombre. */
+function lignesItems(g) {
+  g = g.slice().sort((a, b) => b.y - a.y || a.x - b.x);
+  const L = []; let cur = null;
+  for (const it of g) { if (!cur || Math.abs(cur.y - it.y) > Math.max(2, it.t * 0.35)) { cur = { y: it.y, p: [] }; L.push(cur); } cur.p.push(it); }
+  return L.map((l) => {
+    l.p.sort((a, b) => a.x - b.x); let s = "", fin = null;
+    for (const it of l.p) {
+      let t = it.s; if (/^(\S ){2,}\S$/.test(t.trim())) t = t.trim().replace(/ /g, ""); /* lettres espacées : « I n g é n i e u r » */
+      if (fin === null) s = t;
+      else s += (it.x - fin > Math.max(0.9, it.t * 0.14) && !/\s$/.test(s) && !/^\s/.test(t) ? " " : "") + t;
+      fin = Math.max(fin || 0, it.x + it.w);
+    }
+    return s.replace(/\s+/g, " ").trim();
+  }).filter(Boolean);
+}
+/* Un CV à barre latérale a une bande verticale vide entre ses deux colonnes. */
 function colonnePDF(items, larg) {
   if (items.length < 30) return 0;
-  const bandes = new Array(40).fill(0);
-  items.forEach((i) => { const a = Math.floor(i.x / larg * 40), b = Math.floor((i.x + i.w) / larg * 40); for (let k = Math.max(0, a); k <= Math.min(39, b); k++) bandes[k]++; });
-  for (let k = 10; k < 24; k++) if (bandes[k] === 0 && bandes[k - 1] === 0 && bandes.slice(0, k).reduce((s, v) => s + v, 0) > 20 && bandes.slice(k).reduce((s, v) => s + v, 0) > 20) return (k / 40) * larg;
-  return 0;
+  const occ = new Uint16Array(Math.ceil(larg) + 2);
+  items.forEach((i) => { for (let x = Math.max(0, Math.floor(i.x)); x <= Math.min(larg, Math.ceil(i.x + i.w)); x++) occ[x]++; });
+  let best = 0, lon = 0;
+  for (let x = Math.floor(larg * 0.2); x < larg * 0.65; x++) {
+    if (occ[x]) continue; let e = x; while (e < larg * 0.7 && !occ[e]) e++;
+    if (e - x > lon) { lon = e - x; best = (x + e) / 2; } x = e;
+  }
+  if (lon < 8) return 0;
+  return items.filter((i) => i.x + i.w <= best).length >= 12 && items.filter((i) => i.x >= best).length >= 12 ? best : 0;
+}
+/* La photo d'un CV PDF : la plus grande image « portrait » de la première page (ni logo, ni fond de page). */
+async function photoPDF(doc, lib) {
+  const page = await doc.getPage(1), O = lib.OPS, ops = await page.getOperatorList(), largPage = page.getViewport({ scale: 1 }).width;
+  const mul = (m, n) => [m[0] * n[0] + m[2] * n[1], m[1] * n[0] + m[3] * n[1], m[0] * n[2] + m[2] * n[3], m[1] * n[2] + m[3] * n[3], m[0] * n[4] + m[2] * n[5] + m[4], m[1] * n[4] + m[3] * n[5] + m[5]];
+  let ctm = [1, 0, 0, 1, 0, 0]; const pile = []; const cands = [];
+  for (let i = 0; i < ops.fnArray.length; i++) {
+    const fn = ops.fnArray[i], a = ops.argsArray[i];
+    if (fn === O.save) pile.push(ctm);
+    else if (fn === O.restore) ctm = pile.pop() || [1, 0, 0, 1, 0, 0];
+    else if (fn === O.transform) ctm = mul(ctm, a);
+    else if (fn === O.paintFormXObjectBegin) { pile.push(ctm); if (Array.isArray(a[0]) && a[0].length === 6) ctm = mul(ctm, a[0]); }
+    else if (fn === O.paintFormXObjectEnd) ctm = pile.pop() || [1, 0, 0, 1, 0, 0];
+    else if (fn === O.paintImageXObject || (O.paintJpegXObject && fn === O.paintJpegXObject)) {
+      const larg = Math.hypot(ctm[0], ctm[1]), haut = Math.hypot(ctm[2], ctm[3]);
+      if (larg >= 40 && haut >= 40 && larg <= largPage * 0.45 && larg / haut > 0.6 && larg / haut < 1.7) cands.push({ nom: a[0], aire: larg * haut });
+    }
+  }
+  cands.sort((x, y) => y.aire - x.aire);
+  for (const c of cands) {
+    const img = await new Promise((ok) => { const fini = setTimeout(() => ok(null), 4000); try { (String(c.nom).startsWith("g_") ? page.commonObjs : page.objs).get(c.nom, (o) => { clearTimeout(fini); ok(o); }); } catch (e) { clearTimeout(fini); ok(null); } });
+    if (!img || !img.width || !img.height || img.width < 60 || img.height < 60) continue;
+    let src = img.bitmap;
+    if (!src && img.data) {
+      const cv = document.createElement("canvas"); cv.width = img.width; cv.height = img.height;
+      const g = cv.getContext("2d"), id = g.createImageData(img.width, img.height), d = img.data, n = img.width * img.height;
+      if (img.kind === 3 || d.length === n * 4) id.data.set(d.subarray ? d.subarray(0, n * 4) : d.slice(0, n * 4));
+      else if (img.kind === 2 || d.length === n * 3) for (let k = 0; k < n; k++) { id.data[k * 4] = d[k * 3]; id.data[k * 4 + 1] = d[k * 3 + 1]; id.data[k * 4 + 2] = d[k * 3 + 2]; id.data[k * 4 + 3] = 255; }
+      else continue;
+      g.putImageData(id, 0, 0); src = cv;
+    }
+    if (src) return photoCarree(src, img.width, img.height);
+  }
+  return null;
 }
 async function lireZip(buf, nom) {
   const v = new DataView(buf); let e = buf.byteLength - 22;
@@ -253,118 +454,260 @@ async function texteDOCX(f) {
 
 /* ---------- Analyse d'un CV (par rubriques et mots-clés) ---------- */
 const TITRES = [
-  [/^(profil|resume|a propos|objectif|presentation|summary|about|accroche)/, "resume"],
-  [/^(formations? complementaires?|certifications?|certificats?|formation continue|habilitations?|attestations?|formations? et certifications?)/, "formations"],
-  [/^(experiences?|parcours professionnel|emplois?|experience professionnelle|stages? et emplois|stages?$|parcours$)/, "experiences"],
-  [/^(formations?|education|cursus|parcours (academique|scolaire|universitaire)|diplomes?|etudes|formation academique|scolarite)/, "cursus"],
-  [/^(competences?|skills|savoir faire|outils|logiciels|informatique|aptitudes|qualites|atouts)/, "competences"],
-  [/^(langues?|languages?)/, "langues"],
-  [/^(centres? d ?interets?|loisirs|hobbies|activites|interets|vie associative|passions?)/, "interets"],
-  [/^(references?|contact|coordonnees|informations personnelles|etat civil|infos)/, "ignorer"],
+  [/^(profil|resume|a propos|objectif|presentation|summary|about|accroche|profile)$/, "resume"],
+  [/^(formations? complementaires?|certifications?|certificats?|formation continue|habilitations?|attestations?|formations? et certifications?)$/, "formations"],
+  [/^(experiences?( professionnelles?)?|parcours professionnel|emplois?|stages? et emplois|stages?|parcours|professional experience|work experience)$/, "experiences"],
+  [/^(formations?( academiques?)?|education|cursus( scolaire| academique)?|parcours (academique|scolaire|universitaire)|diplomes?|etudes|scolarite)$/, "cursus"],
+  [/^(informatique|logiciels?|outils( informatiques)?|competences informatiques|maitrise des outils|outils et logiciels)$/, "informatique"],
+  [/^(domaines? cles?|domaines? de competences?|competences?( cles| techniques| et interets| interets| et qualites)?|skills|savoir faire|aptitudes|qualites|atouts|expertises?)$/, "competences"],
+  [/^(langues?( parlees| etrangeres| et dialectes)?|languages?)$/, "langues"],
+  [/^(projets?( et realisations| realisations)?|realisations?|travaux|projets academiques)$/, "projets"],
+  [/^(references?)$/, "references"],
+  [/^(centres? d ?interets?|loisirs|hobbies|activites|interets|vie associative|passions?)$/, "interets"],
+  [/^(contact|coordonnees|informations personnelles|etat civil|infos)$/, "ignorer"],
 ];
-const MOIS = "janvier|janv|fevrier|février|fevr|févr|mars|avril|avr|mai|juin|juillet|juil|aout|août|septembre|sept|octobre|oct|novembre|nov|decembre|décembre|dec|déc|jan|feb|apr|may|jun|jul|aug|sep";
-const UNE_DATE = `(?:(?:${MOIS})\\.?\\s*)?(?:\\d{1,2}[/.-])?(?:19|20)\\d{2}`;
-const RDATE = new RegExp(`(?:depuis\\s+)?(${UNE_DATE})(?:\\s*(?:-|–|—|à|au|to|/)\\s*(${UNE_DATE}|aujourd['’]hui|présent|present|ce jour|en cours|actuel(?:lement)?|now))?`, "i");
+const ETIQUETTES = [[/^(competences? informatiques?|informatique|logiciels?|outils( informatiques)?)$/, "informatique"], [/^(domaines?( cles)?|competences?( techniques| cles)?|expertises?)$/, "competences"], [/^langues?$/, "langues"], [/^(centres? d ?interets?|loisirs|interets|hobbies)$/, "interets"]];
+const cle = (s) => nrm(s).replace(/&/g, " et ").replace(/[^a-z ]/g, " ").replace(/\s+/g, " ").trim();
+const RPUCE = /^[•\-–*▪●◦·■▸►➢✓✔]\s*/;
+const MOIS = "janvier|janv|jan|février|fevrier|févr|fevr|fév|fev|feb|mars|mar|avril|avr|apr|mai|may|juin|june|jun|juillet|juil|july|jul|août|aout|aoû|aug|septembre|sept|sep|octobre|oct|novembre|nov|décembre|decembre|déc|dec";
+const DM = `(?:${MOIS})(?![A-Za-zÀ-ÿ])\\.?`, DAN = "(?:19|20)\\d{2}";
+const UNE_DATE = `(?:${DM}\\s*)?(?:\\d{1,2}[/.-])?${DAN}`;
+const DFIN = `(?:${UNE_DATE}|aujourd['’]hui|présent|present|ce jour|en cours|actuel(?:lement)?|now|today)`;
+const DSEP = `\\s*(?:-|–|—|à|au|to)\\s*`;
+const RDATE = new RegExp(`(?:depuis\\s+)?(?:(${DM})${DSEP}(${UNE_DATE})|(${UNE_DATE})(?:${DSEP}(${DFIN}))?)`, "i");
+const PRESENT = /^(aujourd|présent|present|ce jour|en cours|actuel|now|today)/i;
+/* Renvoie { brut, debut, fin } : « Fév. – Juin 2026 » → début « Fév. 2026 », fin « Juin 2026 » */
+function trouverDate(l) {
+  const d = l && l.match(RDATE); if (!d) return null;
+  const propre = (x) => maj1(String(x || "").replace(/\s+/g, " ").replace(/\.\s*(?=\d)/, ". ").trim());
+  let debut, fin;
+  if (d[1]) { fin = propre(d[2]); debut = propre(d[1] + " " + AN_DE(d[2])); }
+  else { debut = propre(d[3]); fin = d[4] ? (PRESENT.test(d[4]) ? "Présent" : propre(d[4])) : ""; }
+  return { brut: d[0], debut, fin };
+}
+const nettoie = (s) => String(s || "").replace(/^[\s:|,·–—()-]+|[\s:|,·–—(-]+$/g, "").replace(/\s+/g, " ").trim();
+const dateSeule = (l) => { const d = trouverDate(l); return !!d && !nettoie(l.replace(d.brut, "")); };
 function titreDe(l) {
-  if (l.length > 48 || RDATE.test(l)) return null;
-  const n = nrm(l).replace(/[^a-z ]/g, " ").replace(/\s+/g, " ").trim();
+  if (l.length > 48 || /:\s*\S/.test(l) || trouverDate(l)) return null;
+  const n = cle(l);
   if (!n || n.split(" ").length > 5) return null;
   for (const [r, k] of TITRES) if (r.test(n)) return k;
   return null;
 }
-function morceaux(l) { return l.split(/\s+[|–—]\s+|\s+-\s+|\s*\|\s*|\s+chez\s+|\s+at\s+|\s+@\s+|,\s+/i).map((x) => x.trim()).filter(Boolean); }
-function dateSeule(l) { const d = l && l.match(RDATE); return !!d && !l.replace(d[0], "").replace(/[\s:|,–—()-]+/g, ""); }
-function entrees(lignes) {
-  const L = []; let cur = null;
-  lignes.forEach((brut, i) => {
-    const puce = /^[•\-–*▪●◦·]\s*/.test(brut), l = brut.replace(/^[•\-–*▪●◦·]\s*/, "").trim();
-    if (!l) return;
-    const d = !puce && l.match(RDATE);
-    const reste = d ? l.replace(d[0], "").replace(/^[\s:|,–—()-]+|[\s:|,–—()-]+$/g, "").trim() : l;
-    if (d && !reste && cur && !cur.d) { cur.d = d; return; }            /* la date est seule sur sa ligne, sous le titre */
-    const titreSuivi = !d && !puce && cur && cur.d && dateSeule(lignes[i + 1]); /* nouveau titre, sa date suit */
-    if ((d && cur && cur.d) || (d && cur && cur.l.length > 2) || titreSuivi || !cur) { cur = { l: [], d: null }; L.push(cur); }
-    if (d && !cur.d) cur.d = d;
-    if (reste) cur.l.push(puce ? "• " + reste : reste);
-  });
-  return L;
+function etiquette(l) {
+  const m = l.replace(RPUCE, "").match(/^([^:]{3,40}?)\s*:\s*(.+)$/); if (!m) return null;
+  const n = cle(m[1]); for (const [r, k] of ETIQUETTES) if (r.test(n)) return [k, m[2]];
+  return null;
 }
-const sansPuce = (l) => l.replace(/^•\s*/, "");
-const estLigneTitre = (l) => l && !l.startsWith("• ") && l.length < 60;
-const finDate = (d) => (d && d[2] ? d[2].replace(/^./, (x) => x.toUpperCase()) : "");
+/* Recolle les lignes coupées : une ligne qui commence par une minuscule prolonge la puce ou le paragraphe d'au-dessus
+   (dans les projets, toute ligne sans puce prolonge la puce précédente : « … de » + « Yamoussoukro – Juin 2023 »). */
+function fusion(lignes, projets) {
+  const r = [];
+  for (const brut of lignes) {
+    const puce = RPUCE.test(brut), l = brut.replace(RPUCE, "").trim(); if (!l) continue;
+    const prec = r[r.length - 1];
+    if (prec && !puce && (prec.puce || prec.l.length > 60) && ((/^[a-zà-ÿ(]/.test(l) && !dateSeule(l)) || (projets && prec.puce))) { prec.l += " " + l; continue; }
+    r.push({ l, puce });
+  }
+  return r;
+}
+function decoupeListe(s) {
+  const out = []; let p = 0, cur = "";
+  for (const ch of s) { if (ch === "(") p++; if (ch === ")") p = Math.max(0, p - 1); if (!p && /[,;•|·▪●]/.test(ch)) { out.push(cur); cur = ""; } else cur += ch; }
+  out.push(cur);
+  return out.map((x) => x.trim().replace(/[.;:]+$/, "").trim()).filter((x) => x.length > 1);
+}
+/* Titre d'une entrée : « Poste · Entreprise », « Poste - Entreprise - Lieu », « Poste, Entreprise »… */
+function decouper(t) {
+  t = nettoie(t);
+  if (/\s·\s/.test(t)) return t.split(/\s+·\s+/).map(nettoie).filter(Boolean);
+  return t.split(/\s+[|–—]\s+|\s+-\s+|\s*\|\s*|\s*,-\s*|\s+chez\s+|\s+at\s+|\s+@\s+/i).map(nettoie).filter(Boolean);
+}
+/* Découpe une rubrique en entrées : titre, date, ligne secondaire (entreprise/établissement), puces */
+function entrees(lignes) {
+  const out = []; let cur = null;
+  const nouvelle = (titre, d) => { cur = { titre: titre || "", d: d || null, sous: "", apres: "", puces: [] }; out.push(cur); };
+  const F = fusion(lignes);
+  F.forEach((x, i) => {
+    if (x.puce) { if (!cur) nouvelle(); cur.puces.push(x.l); return; }
+    const d = trouverDate(x.l), reste = d ? nettoie(x.l.replace(d.brut, "")) : x.l;
+    if (d && !reste) { if (cur && !cur.d && !cur.puces.length) cur.d = d; else nouvelle("", d); return; }
+    if (d) {
+      if (cur && cur.titre && !cur.d && !cur.puces.length) { cur.d = d; cur.apres = reste; }  /* « Août 2026 – Présent · Abidjan » sous le titre */
+      else nouvelle(reste, d);
+      return;
+    }
+    const suivi = F[i + 1] && !F[i + 1].puce && dateSeule(F[i + 1].l); /* un nouveau titre, dont la date est à la ligne suivante */
+    if (!cur || cur.puces.length || (cur.d && suivi)) { nouvelle(x.l); return; }
+    if (!cur.titre) cur.titre = x.l;
+    else if (!cur.sous && x.l.length <= 90) cur.sous = x.l;
+    else cur.puces.push(x.l);
+  });
+  return out.filter((e) => e.titre || e.puces.length);
+}
+const STAGE = /\b(stage|stagiaire|intern|internship|trainee)\b/i;
+function lireExperiences(lignes) {
+  return entrees(lignes).map((e) => {
+    const p = decouper(e.titre), brut = [e.titre, e.apres].join(" ");
+    let entreprise = p[1] || "", lieu = p.slice(2).join(", "), sous = e.sous;
+    if (!entreprise && sous) { const q = decouper(sous); entreprise = q[0]; if (!lieu) lieu = q.slice(1).join(", "); sous = ""; }
+    let ap = nettoie(e.apres.replace(/\(?\s*stage\s*\)?/i, ""));
+    if (ap) { if (!entreprise) entreprise = nettoie(ap); else if (!lieu) lieu = nettoie(ap); }
+    const missions = (sous ? [sous] : []).concat(e.puces);
+    return { poste: p[0] || "", entreprise, lieu, debut: e.d ? e.d.debut : "", fin: e.d ? e.d.fin : "", type: STAGE.test(brut) ? "Stage" : "", missions: missions.join("\n") };
+  }).filter((e) => e.poste || e.entreprise);
+}
+function lireCursus(lignes) {
+  return entrees(lignes).map((e) => {
+    const p = decouper(e.titre); let etablissement = p[1] || "", ville = p.slice(2).join(", ");
+    let s = e.sous || e.apres;
+    if (!etablissement && s) {
+      const q = /\s·\s/.test(s) ? s.split(/\s+·\s+/) : null;
+      if (q) { etablissement = nettoie(q[0]); ville = nettoie(q.slice(1).join(", ")); }
+      else { const m = s.match(/^(.*\S),\s*([A-ZÀ-Ý][^,]{1,28})$/); if (m && !/\d/.test(m[2])) { etablissement = m[1]; ville = m[2]; } else etablissement = s; }
+      s = "";
+    }
+    return { diplome: p[0] || "", etablissement: nettoie(etablissement), ville, debut: e.d && e.d.fin ? e.d.debut : "", fin: e.d ? (e.d.fin || e.d.debut) : "", mention: [s && s !== e.apres ? s : "", ...e.puces].filter(Boolean).join(" · ").slice(0, 200) };
+  }).filter((e) => e.diplome || e.etablissement);
+}
+function lireFormations(lignes) {
+  return entrees(lignes).map((e) => { const p = decouper(e.titre); return { intitule: p[0] || "", organisme: p[1] || e.sous || e.apres || "", annee: e.d ? AN_DE(e.d.fin) || AN_DE(e.d.debut) : "" }; }).filter((e) => e.intitule);
+}
+function lireListe(lignes) {
+  const r = [];
+  fusion(lignes).forEach((x) => { (x.puce ? [x.l.replace(/[\s;.]+$/, "")] : decoupeListe(x.l)).forEach((v) => { v = maj1(nettoie(v)); if (v.length > 1 && v.length <= 90 && !r.some((y) => nrm(y) === nrm(v))) r.push(v); }); });
+  return r;
+}
+function lireInformatique(lignes) {
+  const r = [], ajoute = (logiciel, detail) => { logiciel = nettoie(logiciel); if (logiciel.length > 1 && logiciel.length <= 60 && !r.some((y) => nrm(y.logiciel) === nrm(logiciel))) r.push({ logiciel, detail: nettoie(detail || "") }); };
+  fusion(lignes).forEach((x) => {
+    const l = x.l.replace(/^[A-Z]\s+(?=[A-Z0-9])/, ""); /* pastille d'initiale devant le logiciel */
+    const m = l.match(/^(.{2,50}?)\s+[–—-]\s+(.+)$/) || (x.puce && l.match(/^(.{2,50}?)\s*:\s+(.+)$/));
+    if (m) return ajoute(m[1], m[2]);
+    decoupeListe(l).forEach((v) => { const p = v.match(/^(.*?)\s*\((.+)\)$/); if (p) ajoute(p[1], p[2]); else ajoute(v, ""); });
+  });
+  return r.slice(0, 20);
+}
+const NOMS_LANGUES = { francais: "Français", french: "Français", anglais: "Anglais", english: "Anglais", espagnol: "Espagnol", spanish: "Espagnol", allemand: "Allemand", german: "Allemand", arabe: "Arabe", portugais: "Portugais", italien: "Italien", chinois: "Chinois", mandarin: "Mandarin", russe: "Russe", japonais: "Japonais", neerlandais: "Néerlandais", turc: "Turc", baoule: "Baoulé", dioula: "Dioula", bete: "Bété", senoufo: "Sénoufo", agni: "Agni", wolof: "Wolof", haoussa: "Haoussa", hausa: "Haoussa", swahili: "Swahili", lingala: "Lingala", yoruba: "Yoruba", twi: "Twi", ewe: "Éwé", fon: "Fon", bambara: "Bambara", moore: "Mooré" };
+function lireLangues(lignes) {
+  const r = [];
+  fusion(lignes).forEach((x) => decoupeListe(x.l).forEach((morceau) => {
+    const mots = morceau.split(/\s+/), trouvees = [], reste = [];
+    mots.forEach((w) => { const k = nrm(w).replace(/[^a-z]/g, ""); if (NOMS_LANGUES[k]) trouvees.push(NOMS_LANGUES[k]); else if (!/^(et|and|&|:|-|–)$/i.test(w)) reste.push(w); });
+    let niveau = nettoie(reste.join(" ").replace(/^[:\-–]\s*/, "").replace(/^\((.*)\)$/, "$1"));
+    if (trouvees.length > 1) niveau = niveau.replace(/s\b/i, "");
+    niveau = maj1(niveau.toLowerCase() === niveau || niveau.toUpperCase() !== niveau ? niveau : niveau.toLowerCase());
+    if (trouvees.length) trouvees.forEach((langue) => { if (!r.some((y) => y.langue === langue)) r.push({ langue, niveau }); });
+    else { const m = morceau.match(/^([A-Za-zÀ-ÿ' ]{3,20}?)\s*([:\-–(])\s*(.+)$/); if (m) r.push({ langue: maj1(m[1].trim()), niveau: maj1(m[3].replace(/\)$/, "").trim()) }); }
+  }));
+  return r.slice(0, 8);
+}
+function lireProjets(lignes) {
+  return fusion(lignes, true).map((x) => {
+    const m = x.l.match(new RegExp(`[\\s,–—-]+((?:${DM}\\s*)?${DAN})\\.?$`, "i"));
+    return { titre: nettoie(m ? x.l.slice(0, m.index) : x.l).replace(/\.$/, ""), date: m ? maj1(m[1].replace(/\.\s*(?=\d)/, ". ")) : "" };
+  }).filter((p) => p.titre.length > 3).slice(0, 12);
+}
+const RTEL = /(?:\(\s*\+\s*\d{2,3}\s*\)|\+\s?\d{2,3})?[\s.]*\d[\d\s.()-]{6,20}\d/;
+const telDe = (l) => { const m = l.match(RTEL); return m && m[0].replace(/\D/g, "").length >= 8 && !/^(19|20)\d{2}\s*[-–]\s*(19|20)\d{2}$/.test(m[0].trim()) ? m[0].trim() : ""; };
+const mailDe = (l) => (l.match(/[\w.+-]+@[\w-]+(?:\.[\w-]+)+/) || [""])[0];
+const ressembleNom = (l) => /^[A-Za-zÀ-ÿ'’.-]+(\s+[A-Za-zÀ-ÿ'’.-]+){1,4}$/.test(l) && !/[,@\d]/.test(l);
+function lireReferences(lignes) {
+  const r = []; let cur = null;
+  fusion(lignes).forEach(({ l }) => {
+    const m = l.match(/^([^:|]{4,45}?)\s*:\s*(.+)$/);
+    if (m && ressembleNom(m[1].trim()) && /[|@]|\d{6}/.test(m[2])) {
+      const p = m[2].split("|").map((x) => x.trim()).filter(Boolean), e = { nom: m[1].trim(), poste: "", telephone: "", email: "" };
+      p.forEach((x) => { if (mailDe(x)) e.email = mailDe(x); else if (telDe(x)) e.telephone = telDe(x); else e.poste = e.poste ? e.poste + ", " + x : x; });
+      r.push(e); cur = null; return;
+    }
+    if (mailDe(l) && cur) { cur.email = mailDe(l); return; }
+    if (telDe(l) && cur && !/[a-z]{4}/i.test(l.replace(telDe(l), ""))) { cur.telephone = telDe(l); return; }
+    if (ressembleNom(l) && (!cur || cur.poste || cur.email || cur.telephone)) { cur = { nom: l, poste: "", telephone: "", email: "" }; r.push(cur); return; }
+    if (cur) cur.poste = cur.poste ? cur.poste + ", " + l : l;
+  });
+  return r.filter((e) => e.poste || e.email || e.telephone).slice(0, 6);
+}
+const VILLES = ["Abidjan", "Yamoussoukro", "Bouaké", "San-Pédro", "San Pedro", "Korhogo", "Daloa", "Man", "Grand-Bassam", "Bingerville", "Dakar", "Bamako", "Ouagadougou", "Lomé", "Cotonou", "Accra", "Paris", "Lyon", "Marseille", "Douala", "Yaoundé", "Libreville", "Conakry", "Niamey"];
 function analyserCV(texte) {
   const lignes = texte.split(/\n/).map((l) => l.replace(/\s+/g, " ").trim()).filter((l) => l && !/^\|?$/.test(l));
   const r = CV_VIDE(), blocs = { tete: [] }; let sec = "tete";
-  for (const l of lignes) { const t = titreDe(l); if (t) { sec = t; blocs[sec] = blocs[sec] || []; continue; } (blocs[sec] = blocs[sec] || []).push(l); }
-  const tout = texte;
-  r.contact.email = (tout.match(/[\w.+-]+@[\w-]+\.[\w.-]+/) || [""])[0];
-  r.contact.telephone = ((tout.match(/(?:\+|00)?\d[\d .-]{7,16}\d/g) || []).find((x) => x.replace(/\D/g, "").length >= 8 && !/^(19|20)\d{2}\s*[-–]\s*(19|20)\d{2}$/.test(x.trim())) || "").trim();
-  r.contact.lien = (tout.match(/(?:https?:\/\/)?(?:www\.)?(?:linkedin\.com|github\.com)\/[^\s,|]+/i) || [""])[0];
-  const tete = blocs.tete.filter((l) => !l.includes("@") && !(r.contact.telephone && l.includes(r.contact.telephone)));
-  const nom = tete.find((l) => /^[A-Za-zÀ-ÿ' -]{4,40}$/.test(l) && l.split(" ").length >= 2 && l.split(" ").length <= 5) || "";
-  const apres = tete.filter((l) => l !== nom);
-  r.titre = (apres.find((l) => l.length >= 4 && l.length <= 90 && !/\d{4}/.test(l)) || "").slice(0, 120);
-  const villes = ["Abidjan", "Yamoussoukro", "Bouaké", "San-Pédro", "Korhogo", "Daloa", "Man", "Dakar", "Bamako", "Ouagadougou", "Lomé", "Cotonou", "Accra", "Paris", "Lyon"];
-  r.contact.ville = villes.find((v) => nrm(tout).includes(nrm(v))) || "";
-  const longues = apres.filter((l) => l.length > 90);
-  r.resume = (blocs.resume || longues).map(sansPuce).join(" ").slice(0, 1200);
-  (entrees(blocs.experiences || [])).forEach((e) => {
-    const p = morceaux(sansPuce(e.l[0] || "")); if (!p.length && !e.d) return;
-    const ent2 = !p[1] && estLigneTitre(e.l[1]);
-    r.experiences.push({ poste: p[0] || "", entreprise: p[1] || (ent2 ? e.l[1] : ""), lieu: p[2] || "", debut: e.d ? e.d[1] : "", fin: finDate(e.d), missions: e.l.slice(ent2 ? 2 : 1).map(sansPuce).join("\n") });
-  });
-  (entrees(blocs.cursus || [])).forEach((e) => {
-    const p = morceaux(sansPuce(e.l[0] || "")); if (!p.length) return;
-    const et2 = !p[1] && estLigneTitre(e.l[1]);
-    r.cursus.push({ diplome: p[0], etablissement: p[1] || (et2 ? e.l[1] : ""), ville: p[2] || "", debut: e.d && e.d[2] ? e.d[1] : "", fin: e.d ? (e.d[2] ? finDate(e.d) : e.d[1]) : "", mention: e.l.slice(et2 ? 2 : 1).map(sansPuce).join(" · ").slice(0, 160) });
-  });
-  (entrees(blocs.formations || [])).forEach((e) => {
-    const p = morceaux(sansPuce(e.l[0] || "")); if (!p.length) return;
-    r.formations.push({ intitule: p[0], organisme: p[1] || (estLigneTitre(e.l[1]) ? e.l[1] : ""), annee: e.d ? (e.d[2] && !/^[a-z]/i.test(e.d[2]) ? e.d[2] : e.d[1]) : "" });
-  });
-  const items = (ls) => [...new Set((ls || []).map(sansPuce).flatMap((l) => (l.includes(":") ? l.split(":").slice(1).join(":") : l).split(/[,;•|·▪●]|\s{2,}|\s-\s/)).map((x) => x.trim().replace(/[.:]$/, "")).filter((x) => x.length > 1 && x.length <= 45))];
-  const vus = new Set(); r.competences = items(blocs.competences).filter((x) => !vus.has(nrm(x)) && vus.add(nrm(x))).slice(0, 40);
-  r.langues = [...new Set((blocs.langues || []).map(sansPuce).flatMap((l) => l.split(/[,;•|·▪●]|\s{2,}/)).map((x) => x.trim()).filter((x) => x.length > 1 && x.length <= 60))].map((x) => { const m = x.match(/^([A-Za-zÀ-ÿ' ]{3,20}?)\s*([:\-–(])\s*(.+)$/); return m ? { langue: m[1].trim(), niveau: (m[2] === "(" ? m[3].replace(/\)$/, "") : m[3]).trim() } : { langue: x, niveau: "" }; }).slice(0, 8);
-  r.interets = items(blocs.interets).slice(0, 12);
+  const pousse = (k, l) => (blocs[k] = blocs[k] || []).push(l);
+  for (const l of lignes) {
+    if (l === COL) { sec = "tete"; continue; }
+    const t = titreDe(l); if (t) { sec = t; blocs[sec] = blocs[sec] || []; continue; }
+    if (!["experiences", "resume", "cursus", "projets", "references", "formations"].includes(sec)) { const e = etiquette(l); if (e) { pousse(e[0], e[1]); continue; } }
+    pousse(sec, l);
+  }
+  /* En-tête : nom, titre, coordonnées */
+  const tete = (blocs.tete || []).map((l) => l.replace(RPUCE, "").trim()).filter(Boolean);
+  const morceauxTete = tete.flatMap((l) => l.split(/\s+\|\s+/).map((x) => x.trim()));
+  r.contact.email = morceauxTete.map(mailDe).find(Boolean) || mailDe(texte);
+  r.contact.telephone = morceauxTete.map(telDe).find(Boolean) || "";
+  r.contact.lien = (texte.match(/(?:https?:\/\/)?(?:www\.)?(?:linkedin\.com|github\.com)\/[^\s,|]+/i) || [""])[0];
+  const adresse = morceauxTete.find((l) => l.length <= 60 && !mailDe(l) && !telDe(l) && VILLES.some((v) => new RegExp(`(^|[\\s,(])${v}([\\s,)–-]|$)`, "i").test(l)));
+  r.contact.ville = adresse || VILLES.find((v) => nrm(texte).includes(nrm(v))) || "";
+  const candidats = tete.filter((l) => ressembleNom(l) && l.split(/\s+/).length <= 5 && l.length <= 45);
+  const maj = (l) => (l.match(/[A-ZÀ-Ý]/g) || []).length / Math.max(1, (l.match(/[A-Za-zÀ-ÿ]/g) || []).length);
+  const nom = candidats.sort((a, b) => maj(b) - maj(a))[0] || "";
+  const iNom = tete.indexOf(nom), libres = (l) => l !== nom && !mailDe(l) && !telDe(l) && l !== adresse;
+  const apres = iNom >= 0 ? tete.slice(iNom + 1).find((l) => libres(l) && l.length <= 100) : null;
+  r.titre = (apres || tete.find((l) => libres(l) && l.length >= 4 && l.length <= 90 && !/\d{4}/.test(l)) || "").slice(0, 120);
+  r.contact.extra = (tete.find((l) => libres(l) && l !== r.titre && l.length <= 60 && l !== adresse) || "").slice(0, 80);
+  const longues = tete.filter((l) => l.length > 90);
+  r.resume = (blocs.resume || longues).map((l) => l.replace(RPUCE, "")).join(" ").replace(/\s+/g, " ").slice(0, 1400);
+  r.experiences = lireExperiences(blocs.experiences || []);
+  r.cursus = lireCursus(blocs.cursus || []);
+  r.formations = lireFormations(blocs.formations || []);
+  r.competences = lireListe(blocs.competences || []).slice(0, 40);
+  r.informatique = lireInformatique(blocs.informatique || []);
+  r.langues = lireLangues(blocs.langues || []);
+  r.projets = lireProjets(blocs.projets || []);
+  r.references = lireReferences(blocs.references || []);
+  r.interets = lireListe(blocs.interets || []).slice(0, 12);
   return { cv: r, nom, rubriques: Object.keys(blocs).filter((k) => k !== "tete" && k !== "ignorer") };
 }
 async function importerCV(inp) {
   const f = inp.files[0]; inp.value = ""; if (!f) return;
   if (f.size > 8e6) return toast("Fichier trop lourd (8 Mo maximum).");
-  const n = f.name.toLowerCase(); let texte = "";
+  const n = f.name.toLowerCase(); let texte = "", photo = null, colonnes = false;
   toast("Lecture de votre CV…");
   try {
-    if (n.endsWith(".pdf") || f.type === "application/pdf") texte = await textePDF(f);
+    if (n.endsWith(".pdf") || f.type === "application/pdf") ({ texte, photo, colonnes } = await lirePDF(f));
     else if (n.endsWith(".docx")) texte = await texteDOCX(f);
     else if (n.endsWith(".txt")) texte = await f.text();
     else return modal(`<h2>Format non pris en charge</h2><p>Importez votre CV en <b>PDF</b> ou en <b>Word (.docx)</b>. Un ancien fichier .doc peut être réenregistré en .docx depuis Word.</p><div class="row"><span class="sp"></span><button class="btn" onclick="closeModal()">Compris</button></div>`);
   } catch (e) { return modal(`<h2>Lecture impossible</h2><p>${esc(e.message || "Le fichier n'a pas pu être lu.")}</p><div class="row"><span class="sp"></span><button class="btn" onclick="closeModal()">Compris</button></div>`); }
   if (texte.replace(/\s/g, "").length < 40) return modal(`<h2>Aucun texte lisible</h2><p>Ce CV semble être une image (scan ou photo) : il n'y a pas de texte à lire. Remplissez les rubriques à la main, ou importez la version Word.</p><div class="row"><span class="sp"></span><button class="btn" onclick="closeModal()">Compris</button></div>`);
-  IMPORT = analyserCV(texte);
-  const c = IMPORT.cv, ligne = (nom, n) => `<div class="ligne"><span class="sq ${n ? "v" : "k"}"></span><span class="sp">${nom}</span><b>${n || "—"}</b></div>`;
+  IMPORT = analyserCV(texte); IMPORT.photo = photo;
+  IMPORT.modele = colonnes || photo ? "signature" : "epure";
+  const c = IMPORT.cv, ligne = (nom, n) => `<div class="ligne"><span class="sq ${n ? "v" : "k"}"></span><span class="sp">${nom}</span><b>${n === true ? "✓" : n || "—"}</b></div>`;
   const existe = cvCompletude(CVD) > 30 && (CVD.experiences.length || CVD.cursus.length);
   modal(`<h2>Votre CV a été lu</h2>
   <p class="small muted">Voici ce que nous avons repéré dans « ${esc(f.name)} ». La lecture automatique n'est pas parfaite : vous pourrez tout vérifier et corriger.</p>
-  ${ligne("Titre", c.titre ? 1 : 0)}${ligne("Résumé", c.resume ? 1 : 0)}${ligne("Coordonnées", [c.contact.email, c.contact.telephone].filter(Boolean).length)}${ligne("Cursus scolaire", c.cursus.length)}${ligne("Formations et certifications", c.formations.length)}${ligne("Expériences", c.experiences.length)}${ligne("Compétences", c.competences.length)}${ligne("Langues", c.langues.length)}${ligne("Centres d'intérêt", c.interets.length)}
-  ${IMPORT.rubriques.length ? "" : '<div class="alert gold" style="margin-top:10px">Nous n\'avons pas reconnu les titres de rubriques de ce CV : le texte a été placé dans le résumé. Répartissez-le dans les rubriques.</div>'}
+  <div class="import-photo">${photo ? cadrePhoto(photo, CVM.forme, 64, CV_COULEURS.marine) + "<span>Photo de profil trouvée dans le PDF</span>" : ""}</div>
+  ${ligne("Titre", c.titre ? true : 0)}${ligne("Résumé", c.resume ? true : 0)}${ligne("Coordonnées", [c.contact.email, c.contact.telephone, c.contact.ville].filter(Boolean).length)}${ligne("Expériences", c.experiences.length)}${ligne("Cursus scolaire", c.cursus.length)}${ligne("Formations et certifications", c.formations.length)}${ligne("Domaines clés / compétences", c.competences.length)}${ligne("Informatique", c.informatique.length)}${ligne("Langues", c.langues.length)}${ligne("Projets et réalisations", c.projets.length)}${ligne("Références", c.references.length)}${c.interets.length ? ligne("Centres d'intérêt", c.interets.length) : ""}
+  ${IMPORT.rubriques.length ? `<p class="small" style="margin:10px 0 0">Mise en page reconnue : nous appliquons le modèle <b>${CV_MODELES[IMPORT.modele][0]}</b> (vous pourrez en changer).</p>` : '<div class="alert gold" style="margin-top:10px">Nous n\'avons pas reconnu les titres de rubriques de ce CV : le texte a été placé dans le résumé. Répartissez-le dans les rubriques.</div>'}
   <div class="row" style="margin-top:16px"><button class="btn ghost" onclick="closeModal()">Annuler</button><span class="sp"></span>${existe ? `<button class="btn ghost" onclick="appliquerImport('completer',this)">Compléter mon CV actuel</button>` : ""}<button class="btn" onclick="appliquerImport('remplacer',this)">${existe ? "Remplacer mon CV" : "Remplir mon CV"}</button></div>`);
 }
 async function appliquerImport(mode, b) {
   const n = IMPORT.cv;
-  if (!IMPORT.rubriques.length && !n.resume) n.resume = "";
   if (mode === "remplacer") {
-    const contact = Object.assign({}, CVD.contact); CVD = cvNormaliser(n);
+    const contact = Object.assign({}, CVD.contact), photo = CVD.photo; CVD = cvNormaliser(n);
     Object.keys(contact).forEach((k) => { if (!CVD.contact[k]) CVD.contact[k] = contact[k]; });
+    CVD.photo = IMPORT.photo || photo;
+    if (IMPORT.rubriques.length) CVM = miseDe({ modele: IMPORT.modele, couleur: "marine", forme: CVM.forme });
   } else {
-    ["titre", "resume"].forEach((k) => { if (!CVD[k]) CVD[k] = n[k]; });
+    ["titre", "resume", "photo"].forEach((k) => { if (!CVD[k]) CVD[k] = k === "photo" ? IMPORT.photo || "" : n[k]; });
     Object.keys(n.contact).forEach((k) => { if (!CVD.contact[k]) CVD.contact[k] = n.contact[k]; });
-    ["cursus", "formations", "experiences", "langues"].forEach((k) => { CVD[k] = CVD[k].concat(n[k]); });
+    LISTES.forEach((k) => { CVD[k] = CVD[k].concat(n[k]); });
     ["competences", "interets"].forEach((k) => { n[k].forEach((x) => { if (!CVD[k].some((y) => nrm(y) === nrm(x))) CVD[k].push(x); }); });
   }
   await enregistrerCV(b, true); closeModal();
   toast("CV importé et enregistré : vérifiez chaque rubrique.");
   render();
 }
+
 
 /* ---------- Adapter le CV à une offre ---------- */
 const VIDES = new Set(("avec pour dans des les une sur par aux est sont nous vous votre notre leur leurs etre avoir plus moins tres tout tous toute toutes cette ces son ses sera seront ainsi afin entre dont sous chez comme mais donc car poste postes profil profils candidat candidate candidats recherche recherchons offre mission missions travail equipe equipes entreprise societe annee annees ans experience experiences niveau minimum souhaite souhaitee souhaites requis requise bonne bonnes bon bons connaissance connaissances capacite capacites etc qui que quoi the and for with you your our will are this that from have has jeune junior senior emploi stage alternance cdi cdd contrat lieu date selon ville sein afin aussi bien etant faire fait doit doivent assurer participer realiser").split(" "));
@@ -379,7 +722,7 @@ function motsOffre(o) {
   ajoute(o.titre, 3); ajoute(o.secteur, 2); ajoute(o.description, 1);
   return [...f.entries()].sort((a, b) => b[1] - a[1]).slice(0, 16).map(([r]) => ({ r, mot: aff.get(r) }));
 }
-function texteCV(c) { return [c.titre, c.resume, ...c.competences, ...c.experiences.map((e) => [e.poste, e.entreprise, e.missions].join(" ")), ...c.cursus.map((e) => [e.diplome, e.etablissement, e.mention].join(" ")), ...c.formations.map((e) => e.intitule + " " + e.organisme)].join(" "); }
+function texteCV(c) { return [c.titre, c.resume, ...c.competences, ...(c.informatique || []).map((e) => e.logiciel + " " + (e.detail || "")), ...(c.projets || []).map((e) => e.titre), ...c.experiences.map((e) => [e.poste, e.entreprise, e.missions].join(" ")), ...c.cursus.map((e) => [e.diplome, e.etablissement, e.mention].join(" ")), ...c.formations.map((e) => e.intitule + " " + e.organisme)].join(" "); }
 function correspondance(c, cles) { const t = racines(texteCV(c)); const trouves = cles.filter((k) => t.has(k.r)); return { pct: cles.length ? Math.round(trouves.length / cles.length * 100) : 0, trouves, manquants: cles.filter((k) => !t.has(k.r)) }; }
 function pertinence(texte, cles) { const t = racines(texte); return cles.filter((k) => t.has(k.r)).length; }
 function preparerAdaptation(o) {
@@ -479,7 +822,7 @@ async function ameliorerIA(b) {
   const r = await occupe(b, adapterAvecIA(cvAdapte(), ADAPT.o));
   if (r && r.resume) { ADAPT.c.resume = r.resume; if (r.titre) ADAPT.c.titre = r.titre; $("#app").innerHTML = ecranAdaptation(); ajusterApercus(); }
 }
-function instantaneCV(c, m) { return Object.assign(copie(c), { nom: nomComplet(ME.profil), modele: m.modele, couleur: m.couleur }); }
+function instantaneCV(c, m) { return Object.assign(copie(c), { nom: nomComplet(ME.profil), modele: m.modele, couleur: m.couleur, forme: m.forme }); }
 async function postulerAvecCV(id, b, sansCV) {
   const cv = sansCV ? null : ADAPT && ADAPT.o && ADAPT.o.id === id ? instantaneCV(cvAdapte(), ADAPT.m) : (CVD && cvCompletude(CVD) >= 30 ? instantaneCV(CVD, CVM) : null);
   let r;
@@ -492,7 +835,7 @@ async function postulerAvecCV(id, b, sansCV) {
 /* ---------- Côté entreprise : le CV joint ---------- */
 function voirCVJoint(id) {
   const c = PRE.toutes.find((x) => x.id === id); if (!c || !c.cv) return;
-  const html = rendreCV(c.cv, { modele: c.cv.modele || "classique", couleur: c.cv.couleur || "vert" }, c.cv.nom || nomComplet(PRE.profils[c.user_id]));
+  const html = rendreCV(c.cv, { modele: c.cv.modele, couleur: c.cv.couleur, forme: c.cv.forme }, c.cv.nom || nomComplet(PRE.profils[c.user_id]));
   const m = modal(`<div class="row" style="margin-bottom:10px"><h2 class="sp" style="margin:0">CV joint</h2><button class="btn ghost sm" onclick="detail('${id}')">Retour</button><button class="btn sm" id="btn-imprimer-cv">Imprimer / PDF</button></div><div class="cv-apercu">${html}</div>`);
   m.querySelector(".modal").classList.add("large");
   m.querySelector("#btn-imprimer-cv").onclick = () => imprimerCV(html);
