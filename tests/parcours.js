@@ -35,6 +35,15 @@ const CV_TEST = ["KOUADIO N'goran Henri-Joel", "Ingénieur pétrolier et gazier"
   "Operations Engineer – Genser Energy | Prestea", "2025 – Présent", "• Exploitation d'une centrale électrique au gaz",
   "FORMATION", "Master Génie pétrolier et gazier – INP-HB | Yamoussoukro", "2021 – 2024", "Mention Bien", "Baccalauréat série C – Lycée classique d'Abidjan", "2018",
   "COMPÉTENCES", "HYSYS, Excel avancé, Python, Analyse de risques, Bilan matière", "LANGUES", "Français : langue maternelle", "Anglais : courant (B2)", "CENTRES D'INTÉRÊT", "Lecture, football, bénévolat"];
+/* Petite image PNG (dégradé) pour tester la photo de profil */
+function png(l, h) {
+  const zlib = require("zlib"), lignes = [];
+  for (let y = 0; y < h; y++) { const r = [0]; for (let x = 0; x < l; x++) r.push(40 + x % 200, 90 + y % 150, 160); lignes.push(Buffer.from(r)); }
+  const crc = (b) => { let c = -1; for (const o of b) { c ^= o; for (let k = 0; k < 8; k++) c = (c >>> 1) ^ (0xEDB88320 & -(c & 1)); } return (c ^ -1) >>> 0; };
+  const bloc = (t, d) => { const n = Buffer.alloc(4); n.writeUInt32BE(d.length); const td = Buffer.concat([Buffer.from(t), d]), c = Buffer.alloc(4); c.writeUInt32BE(crc(td)); return Buffer.concat([n, td, c]); };
+  const ih = Buffer.alloc(13); ih.writeUInt32BE(l, 0); ih.writeUInt32BE(h, 4); ih[8] = 8; ih[9] = 2;
+  return Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), bloc("IHDR", ih), bloc("IDAT", zlib.deflateSync(Buffer.concat(lignes))), bloc("IEND", Buffer.alloc(0))]);
+}
 async function inscrire(p, type, prenoms, nom, email) {
   await p.click(`button:has-text("${type === "candidat" ? "Je cherche un emploi" : type === "entreprise" ? "Je recrute" : "Je représente une école"}")`);
   await p.fill("#f-prenoms", prenoms); await p.fill("#f-nom", nom); await p.fill("#f-tel", "07 07 07 07 07");
@@ -86,14 +95,25 @@ async function creerOrg(p, nom, ville, secteur) {
   ok((await texte(C)).includes("Mon profil & CV"), "candidat : page « Mon CV »");
   await C.setInputFiles("#cv-fichier", { name: "cv-henri.docx", mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", buffer: docx(CV_TEST) }); await pause(C, 1200);
   const lu = await C.textContent(".modal");
-  ok(lu.includes("Votre CV a été lu") && /Expériences\s*2/.test(lu) && /Cursus scolaire\s*2/.test(lu) && /Compétences\s*5/.test(lu), "candidat : CV Word lu (2 expériences, 2 diplômes, 5 compétences)");
+  ok(lu.includes("Votre CV a été lu") && /Expériences\s*2/.test(lu) && /Cursus scolaire\s*2/.test(lu) && /compétences\s*5/i.test(lu), "candidat : CV Word lu (2 expériences, 2 diplômes, 5 compétences)");
   await C.click('.modal button:has-text("Remplir mon CV")'); await pause(C, 1500);
   const ap = await C.textContent("#cv-apercu");
   ok(ap.includes("Foxtrot International") && ap.includes("Master Génie pétrolier et gazier") && ap.includes("HYSYS"), "candidat : CV rempli et affiché dans le modèle");
   await C.click('.cv-modeles button:has-text("Moderne")'); await pause(C, 500);
   ok(await C.isVisible("#cv-apercu .cvt-moderne"), "candidat : changement de modèle de CV");
+  await C.setInputFiles("#cv-photo-fichier", { name: "photo.png", mimeType: "image/png", buffer: png(300, 400) }); await pause(C, 900);
+  ok(await C.isVisible("#cv-apercu .cvt-moderne .phw img") && (await C.getAttribute("#cv-apercu .phw img", "src")).startsWith("data:image/jpeg"), "candidat : photo de profil ajoutée et affichée dans le CV");
+  await C.click('.cv-formes button[title="Hexagone"]'); await pause(C, 500);
+  ok(await C.isVisible("#cv-apercu .phw.f-hexagone"), "candidat : forme de la photo changée (hexagone)");
+  await C.click('.cv-modeles button:has-text("Signature")'); await pause(C, 500);
+  ok(await C.isVisible("#cv-apercu .cvt-signature .f-hexagone img") && (await C.textContent("#cv-apercu .cvt-signature")).includes("Domaines clés"), "candidat : modèle Signature (barre latérale, photo, domaines clés)");
+  await C.click('.cv-modeles button:has-text("Épuré")'); await pause(C, 500);
+  ok(await C.isVisible("#cv-apercu .cvt-epure") && !(await C.isVisible("#cv-apercu .cvt-epure .phw")), "candidat : modèle Épuré (ATS, sans photo)");
+  await C.click('.cv-modeles button:has-text("Signature")'); await pause(C, 400);
   await C.click('.cv-barre ~ * button:has-text("Enregistrer"), header button:has-text("Enregistrer"), .chemise button:has-text("Enregistrer")'); await pause(C, 900);
   await photo(C, "candidat-cv");
+  await C.reload(); await pause(C, 1500);
+  ok(await C.isVisible("#cv-apercu .cvt-signature .f-hexagone img"), "candidat : modèle, forme et photo retrouvés après rechargement");
   await C.click('#nav button:has-text("Mon espace")'); await pause(C, 1200);
   await C.click('button:has-text("Adapter mon CV")'); await pause(C, 1500);
   ok((await texte(C)).includes("Correspondance avec l'offre") && (await C.textContent("#cv-apercu")).includes("Ingénieur procédés gaz junior"), "candidat : CV adapté à l'offre (titre, correspondance)");
@@ -177,6 +197,24 @@ async function creerOrg(p, nom, ville, secteur) {
   ok((await C.textContent("#toast")).includes("incorrect"), "connexion : mauvais mot de passe refusé en français");
   await C.fill("#f-mdp", "motdepasse1"); await C.click('.card button.btn:has-text("Se connecter")'); await pause(C, 1300);
   ok((await texte(C)).includes("Espace Diplômés"), "connexion : retour dans l'espace");
+
+  /* 9. (local seulement) Import de vrais CV PDF : CV_PDF="a.pdf,b.pdf" et pdf.js servi dans /pdfjs/ */
+  if (process.env.CV_PDF) {
+    await C.addInitScript(() => { import("/pdfjs/pdf.mjs").then((m) => { m.GlobalWorkerOptions.workerSrc = "/pdfjs/pdf.worker.mjs"; window.pdfjsLib = m; }); });
+    await C.reload(); await pause(C, 1500);
+    await C.click('#nav button:has-text("Mon CV")'); await pause(C, 1200);
+    for (const f of process.env.CV_PDF.split(",")) {
+      await C.setInputFiles("#cv-fichier", f); await C.waitForSelector(".modal :text('Votre CV a été lu')", { timeout: 20000 });
+      const m = (await C.textContent(".modal")).replace(/\s+/g, " ");
+      console.log("     " + f.split("/").pop() + " → " + m.slice(m.indexOf("Titre"), m.indexOf("Mise en page") > 0 ? m.indexOf("Mise en page") : 400));
+      ok(/Expériences ?7/.test(m) && /Cursus scolaire ?2/.test(m) && /Informatique ?5/.test(m) && /Langues ?3/.test(m) && /Projets et réalisations ?2/.test(m) && /Références ?3/.test(m), "PDF : toutes les rubriques lues (" + f.split("/").pop() + ")");
+      await C.click('.modal button:has-text("Remplacer mon CV"), .modal button:has-text("Remplir mon CV")'); await pause(C, 1800);
+      const ap = await C.textContent("#cv-apercu"), sig = await C.isVisible("#cv-apercu .cvt-signature");
+      ok(ap.includes("Superviseur QHSE") && ap.includes("Aspen") && ap.includes("Armel") && ap.includes("Districom"), "PDF : CV rempli (" + (sig ? "Signature" : "Épuré") + ")");
+      if (sig) ok(await C.isVisible("#cv-apercu .cvt-signature .phw img"), "PDF : photo extraite du PDF");
+      await photo(C, "pdf-" + f.split("/").pop().replace(/\W+/g, "-"));
+    }
+  }
 
   console.log("erreurs de page :", JSON.stringify(erreurs.filter((e) => !/^(ÉCHEC|OK)/.test(e) && !e.startsWith("candidat") && !e.startsWith("entreprise") && !e.startsWith("école") && !e.startsWith("salarié") && !e.startsWith("concurrent") && !e.startsWith("connexion"))));
   console.log(erreurs.length ? "PROBLÈMES : " + erreurs.length : "TOUT EST OK");

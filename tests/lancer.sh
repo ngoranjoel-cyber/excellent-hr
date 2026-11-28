@@ -9,6 +9,7 @@ psql -q -d postgres -c "drop database if exists ehr_e2e" -c "create database ehr
 psql -q -d ehr_e2e -v ON_ERROR_STOP=1 -f "$RACINE/supabase/tests/supabase_simule.sql" >/dev/null
 psql -q -d ehr_e2e -v ON_ERROR_STOP=1 -f "$RACINE/supabase/schema.sql" >/dev/null
 mkdir "$TMP/site"; cp -r "$RACINE/index.html" "$RACINE/style.css" "$RACINE/papier.css" "$RACINE/cv.css" "$RACINE/cv.js" "$RACINE/sb.js" "$RACINE/app.js" "$RACINE/assets" "$TMP/site/"
+[ -n "$PDFJS_DIST" ] && mkdir -p "$TMP/site/pdfjs" && cp "$PDFJS_DIST/build/pdf.mjs" "$PDFJS_DIST/build/pdf.worker.mjs" "$TMP/site/pdfjs/"
 printf 'window.EHR_CONFIG = { url: "http://localhost:54322", cle: "sb_publishable_essai" };\n' > "$TMP/site/config.js"
 node "$ICI/faux-supabase.js" 54322 ehr_e2e > "$TMP/serveur.log" 2>&1 & SERVEUR=$!
 (cd "$TMP/site" && python3 -m http.server 8767 >/dev/null 2>&1) & SITE=$!
